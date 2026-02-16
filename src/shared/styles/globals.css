@@ -982,64 +982,152 @@ h3 {
 	min-height: 100vh;
 	display: grid;
 	place-items: center;
-	padding: var(--space-4);
+	padding: clamp(16px, 3vw, 32px);
 	background:
 		radial-gradient(
-			circle at 0% 0%,
-			rgba(255, 90, 60, 0.2),
-			transparent 35%
+			circle at 10% 8%,
+			rgba(255, 90, 60, 0.22),
+			transparent 34%
 		),
 		radial-gradient(
-			circle at 100% 100%,
+			circle at 92% 8%,
 			rgba(83, 183, 255, 0.2),
-			transparent 40%
+			transparent 30%
+		),
+		radial-gradient(
+			circle at 50% 100%,
+			rgba(37, 220, 150, 0.14),
+			transparent 36%
 		),
 		var(--color-bg-website);
 }
 
-.auth-card {
-	width: min(420px, 100%);
+.auth-shell {
+	width: min(1060px, 100%);
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--space-4);
 	border: 1px solid var(--color-border-default);
-	border-radius: var(--radius-md);
-	padding: var(--space-6);
-	background: var(--color-surface-white);
-	box-shadow: var(--shadow-card);
-	display: grid;
-	gap: var(--space-6);
+	border-radius: var(--radius-xl);
+	background: rgba(255, 255, 255, 0.76);
+	box-shadow: 0 16px 42px rgba(17, 24, 39, 0.12);
+	backdrop-filter: blur(8px);
+	overflow: hidden;
 }
 
-.auth-card__brand {
+.auth-showcase {
+	position: relative;
+	background:
+		radial-gradient(
+			circle at 16% 20%,
+			rgba(255, 90, 60, 0.18),
+			transparent 58%
+		),
+		radial-gradient(
+			circle at 90% 12%,
+			rgba(83, 183, 255, 0.2),
+			transparent 44%
+		),
+		linear-gradient(145deg, #fff8f6 12%, #f7fbff 78%);
+	border: 1px solid rgba(229, 231, 235, 0.9);
+	border-radius: 18px;
+	padding: 0;
 	display: grid;
-	gap: var(--space-2);
+	grid-template-rows: minmax(0, 1fr) auto;
+	gap: 0;
+	margin: clamp(10px, 1.8vw, 16px);
+	overflow: hidden;
 }
 
-.auth-card__icon {
-	width: 40px;
-	height: 40px;
-	display: inline-flex;
+.auth-showcase__visual {
+	position: relative;
+	display: grid;
+	place-items: center;
+	padding: 0;
+	min-height: clamp(220px, 33vw, 420px);
+	background:
+		radial-gradient(
+			circle at 10% 10%,
+			rgba(255, 90, 60, 0.12),
+			transparent 42%
+		),
+		radial-gradient(
+			circle at 96% 8%,
+			rgba(83, 183, 255, 0.18),
+			transparent 40%
+		),
+		linear-gradient(150deg, #fff5f2 8%, #eff7ff 78%);
+}
+
+.auth-showcase__main {
+	width: 100%;
+	height: auto;
+	max-width: none;
+	max-height: none;
+	object-fit: contain;
+	filter: drop-shadow(0 16px 28px rgba(31, 41, 51, 0.16));
+	padding: 0;
+	display: block;
+}
+
+.auth-showcase__foods {
+	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: var(--color-surface-primary);
-	border-radius: var(--radius-sm);
+	gap: var(--space-2);
+	flex-wrap: wrap;
+	padding: 10px clamp(14px, 2vw, 20px) 14px;
+	background: linear-gradient(
+		180deg,
+		rgba(255, 255, 255, 0.28),
+		rgba(255, 255, 255, 0.74)
+	);
+	border-top: 1px solid rgba(229, 231, 235, 0.75);
 }
 
-.auth-card__icon .ui-illustration-system {
-	width: 20px;
-	height: 20px;
+.auth-showcase__foods img {
+	width: 38px;
+	height: 38px;
+	padding: 4px;
+	background: var(--color-surface-white);
+	border: 1px solid rgba(209, 213, 219, 0.85);
+	border-radius: var(--radius-full);
+	box-shadow: 0 6px 12px rgba(17, 24, 39, 0.06);
 }
 
-.auth-card__eyebrow {
+.auth-panel {
+	display: grid;
+	align-content: center;
+	gap: var(--space-6);
+	background: rgba(255, 255, 255, 0.92);
+	padding: clamp(24px, 3vw, 44px);
+}
+
+.auth-panel__brand {
+	display: grid;
+	gap: var(--space-3);
+}
+
+.auth-panel__eyebrow {
+	display: inline-flex;
+	align-items: center;
+	width: fit-content;
+	padding: 0 10px;
+	height: 28px;
+	border-radius: var(--radius-full);
+	background: rgba(255, 90, 60, 0.12);
+	border: 1px solid rgba(255, 90, 60, 0.18);
 	font-size: var(--font-size-caption-m);
 	font-weight: var(--font-weight-semibold);
 	color: var(--color-text-interactive);
 }
 
-.auth-card h1 {
+.auth-panel h1 {
 	font-size: var(--font-size-heading-l);
 	font-weight: var(--font-weight-bold);
 }
 
-.auth-card__description {
+.auth-panel__description {
 	font-size: var(--font-size-body-m);
 	color: var(--color-text-secondary);
 }
@@ -1066,17 +1154,64 @@ h3 {
 	padding: 0 var(--space-4);
 	font-size: var(--font-size-body-m);
 	font-family: var(--font-family-base);
+	background: var(--color-surface-white);
 	outline: none;
-	transition: border-color 120ms ease;
+	transition:
+		border-color 120ms ease,
+		box-shadow 120ms ease;
 }
 
 .auth-field input:focus {
 	border-color: var(--color-border-primary);
+	box-shadow: 0 0 0 4px rgba(255, 90, 60, 0.14);
+}
+
+.auth-form__hint {
+	font-size: var(--font-size-caption-m);
+	color: var(--color-text-secondary);
 }
 
 .auth-submit {
 	width: 100%;
 	margin-top: var(--space-2);
+	height: 52px;
+}
+
+@media (min-width: 980px) {
+	.auth-shell {
+		grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+		gap: 0;
+	}
+
+	.auth-showcase {
+		border-radius: 24px;
+	}
+
+	.auth-panel {
+		border-left: 1px solid rgba(229, 231, 235, 0.9);
+	}
+
+	.auth-showcase__visual {
+		min-height: clamp(320px, 35vw, 470px);
+	}
+}
+
+@media (min-width: 640px) and (max-width: 979px) {
+	.auth-showcase__visual {
+		height: clamp(220px, 36vw, 320px);
+		min-height: 0;
+	}
+
+	.auth-showcase__main {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+	}
+
+	.auth-showcase__foods img {
+		width: 34px;
+		height: 34px;
+	}
 }
 
 @media (max-width: 639px) {
@@ -1101,7 +1236,33 @@ h3 {
 		height: 72px;
 	}
 
-	.auth-card {
+	.auth-root {
+		padding: var(--space-3);
+	}
+
+	.auth-shell {
+		border-radius: 18px;
+	}
+
+	.auth-showcase {
+		margin: var(--space-2);
+		padding: 0;
+	}
+
+	.auth-showcase__visual {
+		min-height: clamp(180px, 54vw, 260px);
+	}
+
+	.auth-showcase__foods {
+		justify-content: center;
+	}
+
+	.auth-showcase__foods img {
+		width: 32px;
+		height: 32px;
+	}
+
+	.auth-panel {
 		padding: var(--space-5);
 	}
 }
