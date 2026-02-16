@@ -1,0 +1,110 @@
+:root {
+	/* Primitive palette (Figma variables) */
+	--color-palette-common-white: #ffffff;
+	--color-palette-common-black: #000000;
+	--color-palette-gray-50: #f9fafb;
+	--color-palette-gray-100: #f3f4f6;
+	--color-palette-gray-200: #e5e7eb;
+	--color-palette-gray-300: #d1d5db;
+	--color-palette-gray-400: #9ca3af;
+	--color-palette-gray-500: #6b7280;
+	--color-palette-gray-600: #4b5563;
+	--color-palette-gray-700: #374151;
+	--color-palette-gray-800: #1f2933;
+	--color-palette-gray-900: #111827;
+	--color-palette-primary-50: #ffedea;
+	--color-palette-primary-100: #ffd1c9;
+	--color-palette-primary-200: #ffab9e;
+	--color-palette-primary-300: #ff7f6b;
+	--color-palette-primary-400: #ff654e;
+	--color-palette-primary-500: #ff5a3c;
+	--color-palette-primary-600: #f2472a;
+	--color-palette-primary-700: #d93a20;
+	--color-palette-primary-800: #b82f1a;
+	--color-palette-primary-900: #912416;
+	--color-palette-secondary-100: #d6ecff;
+	--color-palette-secondary-200: #add9ff;
+	--color-palette-secondary-300: #7fc3ff;
+	--color-palette-secondary-500: #53b7ff;
+	--color-palette-green-100: #ddf9ef;
+	--color-palette-green-300: #7eecc4;
+	--color-palette-green-500: #25dc96;
+	--color-palette-green-700: #16b77b;
+	--color-palette-yellow-100: #fff6bf;
+	--color-palette-yellow-300: #ffee7d;
+	--color-palette-yellow-500: #ffe731;
+	--color-palette-yellow-700: #ffd52f;
+
+	/* Semantic tokens */
+	--color-bg-website: var(--color-palette-gray-100);
+	--color-surface-white: var(--color-palette-common-white);
+	--color-surface-primary: var(--color-palette-primary-50);
+	--color-surface-gray: var(--color-palette-gray-100);
+	--color-surface-lightgray: var(--color-palette-gray-50);
+	--color-surface-dark: var(--color-palette-gray-800);
+	--color-text-primary: var(--color-palette-gray-900);
+	--color-text-secondary: var(--color-palette-gray-500);
+	--color-text-disabled: var(--color-palette-gray-300);
+	--color-text-inverse: var(--color-palette-common-white);
+	--color-text-interactive: var(--color-palette-primary-500);
+	--color-border-default: var(--color-palette-gray-200);
+	--color-border-primary: var(--color-palette-primary-500);
+	--color-border-inverse: var(--color-palette-common-white);
+	--color-icon-default: var(--color-palette-gray-500);
+	--color-icon-strong: var(--color-palette-gray-800);
+	--color-icon-inverse: var(--color-palette-common-white);
+
+	/* Button semantic tokens */
+	--color-button-primary-default: var(--color-palette-gray-800);
+	--color-button-primary-hover: var(--color-palette-gray-900);
+	--color-button-primary-disabled: var(--color-palette-gray-400);
+	--color-button-secondary-default: var(--color-palette-primary-500);
+	--color-button-secondary-hover: var(--color-palette-primary-600);
+	--color-button-secondary-disabled: var(--color-palette-primary-200);
+	--color-button-tertiary-default: var(--color-palette-gray-100);
+	--color-button-tertiary-hover: var(--color-palette-gray-200);
+	--color-button-tertiary-disabled: var(--color-palette-gray-50);
+	--color-button-inverse-default: var(--color-palette-common-white);
+	--color-button-inverse-hover: var(--color-palette-gray-50);
+	--color-button-inverse-disabled: var(--color-palette-gray-100);
+
+	/* Typography */
+	--font-family-base:
+		"SUIT", "Pretendard", system-ui, -apple-system, sans-serif;
+	--font-weight-regular: 400;
+	--font-weight-medium: 500;
+	--font-weight-semibold: 600;
+	--font-weight-bold: 700;
+	--font-size-display-l: 28px;
+	--font-size-heading-l: 22px;
+	--font-size-heading-m: 20px;
+	--font-size-heading-s: 18px;
+	--font-size-body-l: 16px;
+	--font-size-body-m: 14px;
+	--font-size-caption-m: 12px;
+	--line-height-default: 1.5;
+
+	/* Radius/spacing */
+	--radius-xs: 4px;
+	--radius-sm: 8px;
+	--radius-md: 12px;
+	--radius-xl: 24px;
+	--radius-full: 999px;
+	--space-0: 0;
+	--space-1: 4px;
+	--space-2: 8px;
+	--space-3: 12px;
+	--space-4: 16px;
+	--space-5: 20px;
+	--space-6: 24px;
+	--space-7: 32px;
+	--space-8: 36px;
+
+	/* Misc */
+	--stroke-rg: 1px;
+	--stroke-md: 1.6px;
+	--shadow-card: 0 10px 30px rgba(31, 41, 51, 0.08);
+	--layout-page-max: 1280px;
+	--layout-content-max: 327px;
+	--layout-sheet-max: 375px;
+}
