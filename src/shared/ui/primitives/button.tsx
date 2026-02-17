@@ -43,18 +43,23 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 			.join(" ");
 
 		const buttonProps = asChild ? props : { type, ...props };
-
-		return (
-			<Comp
-				ref={ref}
-				className={classes}
-				disabled={isDisabled}
-				{...buttonProps}
-			>
+		const content = asChild ? (
+			children
+		) : (
+			<>
 				{loading ? (
 					<span className="ui-button__spinner" aria-hidden />
 				) : null}
 				<span>{children}</span>
+			</>
+		);
+		const disabledProps = asChild
+			? { "aria-disabled": isDisabled || undefined }
+			: { disabled: isDisabled };
+
+		return (
+			<Comp ref={ref} className={classes} {...disabledProps} {...buttonProps}>
+				{content}
 			</Comp>
 		);
 	},

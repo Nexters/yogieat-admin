@@ -8,9 +8,9 @@ type DetailFieldProps = {
 
 export function DetailField({ children, className, label }: DetailFieldProps) {
 	return (
-		<label className={`admin-field${className ? ` ${className}` : ""}`}>
+		<div className={`admin-field${className ? ` ${className}` : ""}`}>
 			<span>{label}</span>
 			{children}
-		</label>
+		</div>
 	);
 }
