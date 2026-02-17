@@ -1,0 +1,19 @@
+:root {
+	--shadow-drop: 0 0 20px 0 rgba(31, 41, 51, 0.08);
+	--layout-header-safe-height: calc(48px + env(safe-area-inset-top));
+	--layout-footer-safe-height: calc(72px + env(safe-area-inset-bottom));
+}
+
+.min-h-screen-dynamic {
+	min-height: 100vh;
+	min-height: 100dvh;
+}
+
+.scrollbar-hide {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
+}

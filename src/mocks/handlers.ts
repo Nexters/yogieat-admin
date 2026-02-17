@@ -1,11 +1,13 @@
 import { rest } from "msw";
+
 import {
 	GatheringListQuery,
 	LoginRequest,
 	RestaurantPatchRequest,
 	RestaurantListQuery,
-} from "../apis/admin/types";
-import { adminMockDb } from "./admin-db";
+} from "#/apis/admin/types";
+import { adminMockDb } from "#/mocks/admin-db";
+import { TIME_SLOT_CODES } from "#/shared/constants";
 
 const DEFAULT_DELAY_MS = 220;
 
@@ -60,7 +62,11 @@ const parseGatheringListQuery = (url: URL): GatheringListQuery => {
 	const size = toNumberOrDefault(url.searchParams.get("size"), 12);
 	const keyword = url.searchParams.get("keyword") ?? undefined;
 	const region = url.searchParams.get("region") ?? undefined;
-	const timeSlot = url.searchParams.get("timeSlot") ?? undefined;
+	const rawTimeSlot = url.searchParams.get("timeSlot");
+	const timeSlot =
+		rawTimeSlot && TIME_SLOT_CODES.includes(rawTimeSlot as (typeof TIME_SLOT_CODES)[number])
+			? (rawTimeSlot as GatheringListQuery["timeSlot"])
+			: undefined;
 	const includeDeleted = toBooleanOrDefault(
 		url.searchParams.get("includeDeleted"),
 		false,

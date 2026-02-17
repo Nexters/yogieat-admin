@@ -1,5 +1,9 @@
 import React from "react";
-import { FoodIllustration, FoodIllustrationType } from "./illustration";
+
+import {
+	FoodIllustration,
+	FoodIllustrationType,
+} from "#/shared/ui/primitives/illustration";
 
 type SelectButtonState = "selected" | "unselected" | "disabled";
 

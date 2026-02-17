@@ -1,4 +1,4 @@
-export { ADMIN_API_MODE } from "./admin-service";
-export { adminService } from "./admin-service";
-export { resetAdminMockData } from "./admin-service";
+export * from "./admin-service";
+export * from "./local-admin-service";
+export * from "./mock-data";
 export * from "./types";

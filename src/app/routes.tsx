@@ -1,14 +1,17 @@
 import React from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { AdminDashboardPage } from "../pages/admin-dashboard-page";
-import { GatheringDetailPage } from "../pages/gathering-detail-page";
-import { GatheringDashboardPage } from "../pages/gathering-dashboard-page";
-import { GatheringListPage } from "../pages/gathering-list-page";
-import { LoginPage } from "../pages/login-page";
-import { RestaurantDetailPage } from "../pages/restaurant-detail-page";
-import { RestaurantListPage } from "../pages/restaurant-list-page";
-import { useAuth } from "../providers";
-import { RequireAuth } from "./guards/RequireAuth";
+
+import { RequireAuth } from "#/app/guards/RequireAuth";
+import {
+	AdminDashboardPage,
+	GatheringDashboardPage,
+	GatheringDetailPage,
+	GatheringListPage,
+	LoginPage,
+	RestaurantDetailPage,
+	RestaurantListPage,
+} from "#/pageComponents";
+import { useAuth } from "#/providers";
 
 function RootRedirect() {
 	return <Navigate to="/login" replace />;

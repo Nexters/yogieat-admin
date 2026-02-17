@@ -14,21 +14,21 @@ describe("api config", () => {
 
 	test("builds API_BASE_URL with /api/v1", () => {
 		process.env.REACT_APP_API_URL = "https://dev-api.yogieat.com";
-		const { API_BASE_URL } = require("./api");
+		const { API_BASE_URL } = require("#/shared/config/api");
 
 		expect(API_BASE_URL).toBe("https://dev-api.yogieat.com/api/v1");
 	});
 
 	test("normalizes duplicate slash when env ends with slash", () => {
 		process.env.REACT_APP_API_URL = "https://dev-api.yogieat.com/";
-		const { API_BASE_URL } = require("./api");
+		const { API_BASE_URL } = require("#/shared/config/api");
 
 		expect(API_BASE_URL).toBe("https://dev-api.yogieat.com/api/v1");
 	});
 
 	test("buildApiUrl appends endpoint without duplicate slash", () => {
 		process.env.REACT_APP_API_URL = "https://dev-api.yogieat.com/";
-		const { buildApiUrl } = require("./api");
+		const { buildApiUrl } = require("#/shared/config/api");
 
 		expect(buildApiUrl("/gatherings/test")).toBe(
 			"https://dev-api.yogieat.com/api/v1/gatherings/test",

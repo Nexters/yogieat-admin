@@ -1,5 +1,6 @@
 import React from "react";
-import { SystemIllustration } from "./illustration";
+
+import { SystemIllustration } from "#/shared/ui/primitives/illustration";
 
 export function Toast({ message }: { message: string }) {
 	return (

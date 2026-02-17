@@ -1,5 +1,5 @@
-import React, { ButtonHTMLAttributes, forwardRef } from "react";
 import { Slot } from "@radix-ui/react-slot";
+import React, { ButtonHTMLAttributes, forwardRef } from "react";
 
 type ButtonVariant = "primary" | "secondary" | "tertiary" | "inverse";
 type ButtonSize = "sm" | "md" | "lg";

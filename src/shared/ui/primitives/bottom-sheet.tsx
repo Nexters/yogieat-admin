@@ -1,6 +1,7 @@
 import React from "react";
-import { Button } from "./button";
-import { BarGraph } from "./progress";
+
+import { Button } from "#/shared/ui/primitives/button";
+import { BarGraph } from "#/shared/ui/primitives/progress";
 
 export function BottomSheet() {
 	return (

@@ -1,6 +1,7 @@
 import React from "react";
-import { SystemIllustration } from "./illustration";
-import { Tag } from "./tag";
+
+import { SystemIllustration } from "#/shared/ui/primitives/illustration";
+import { Tag } from "#/shared/ui/primitives/tag";
 
 const CARD_IMAGE = "/images/result/restaurant-image-placeholder.png";
 

@@ -1,6 +1,12 @@
 import { PropsWithChildren } from "react";
-import { AuthProvider } from "./AuthProvider";
+
+import { AuthProvider } from "#/providers/AuthProvider";
+import { QueryProvider } from "#/providers/QueryProvider";
 
 export function AppProviders({ children }: PropsWithChildren) {
-	return <AuthProvider>{children}</AuthProvider>;
+	return (
+		<QueryProvider>
+			<AuthProvider>{children}</AuthProvider>
+		</QueryProvider>
+	);
 }

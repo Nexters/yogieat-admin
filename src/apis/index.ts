@@ -1,8 +1,11 @@
-import { API_BASE_URL, buildApiUrl } from "../shared/config";
+import { API_BASE_URL, APP_API_MODE, buildApiUrl } from "#/shared/config";
+
 export * from "./admin";
+export * as authApi from "./auth";
+export * as gatheringApi from "./gatherings";
+export * as restaurantApi from "./restaurants";
 
 /**
- * Placeholder API exports.
- * Actual API client wiring will be added in a later phase.
+ * Shared API endpoint helpers.
  */
-export { API_BASE_URL, buildApiUrl };
+export { API_BASE_URL, APP_API_MODE, buildApiUrl };

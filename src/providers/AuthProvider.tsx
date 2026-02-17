@@ -6,7 +6,13 @@ import React, {
 	useMemo,
 	useState,
 } from "react";
-import { AdminSession, LoginRequest, adminService } from "../apis/admin";
+
+import {
+	login as loginApi,
+	logout as logoutApi,
+	type AdminSession,
+	type LoginRequest,
+} from "#/apis/auth";
 
 const ACCESS_TOKEN_KEY = "admin_access_token";
 const REFRESH_TOKEN_KEY = "admin_refresh_token";
@@ -102,14 +108,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
 	);
 
 	const login = useCallback(async (request: LoginRequest) => {
-		const nextSession = await adminService.login(request);
+		const nextSession = await loginApi(request);
 		setSession(nextSession);
 		persistSession(nextSession);
 	}, []);
 
 	const logout = useCallback(async () => {
 		try {
-			await adminService.logout();
+			await logoutApi();
 		} finally {
 			setSession(null);
 			persistSession(null);

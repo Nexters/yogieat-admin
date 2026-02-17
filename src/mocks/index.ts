@@ -1,7 +1,7 @@
-import { resetAdminMockData } from "./admin-db";
+import { resetAdminMockData } from "#/mocks/admin-db";
 
 export const startMockWorker = async () => {
-	const { worker } = await import("./browser");
+	const { worker } = await import("#/mocks/browser");
 	resetAdminMockData();
 	await worker.start({
 		onUnhandledRequest: "bypass",

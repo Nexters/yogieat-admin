@@ -1,5 +1,5 @@
-import { CATEGORY_SEED, RESTAURANT_SEED } from "../../mocks/admin-db";
-import { CategoryOption, RestaurantDetail } from "./types";
+import { CategoryOption, RestaurantDetail } from "#/apis/admin/types";
+import { CATEGORY_SEED, RESTAURANT_SEED } from "#/mocks/admin-db";
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 

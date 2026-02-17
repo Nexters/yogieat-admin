@@ -1,3 +1,3 @@
-export * from "./api";
-export * from "./api-client";
-export * from "./env";
+export * from "#/shared/config/api";
+export * from "#/shared/config/api-client";
+export * from "#/shared/config/env";

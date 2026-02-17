@@ -1,8 +1,9 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
-import App from "./App";
-import { resetAdminMockData } from "./apis/admin";
-import { AUTH_STORAGE_KEYS } from "./providers";
+import React from "react";
+
+import { resetAdminMockData } from "#/apis/admin";
+import App from "#/App";
+import { AUTH_STORAGE_KEYS } from "#/providers";
 
 beforeEach(() => {
 	window.localStorage.clear();

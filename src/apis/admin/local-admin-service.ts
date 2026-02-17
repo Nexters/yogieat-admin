@@ -1,4 +1,3 @@
-import { adminMockDb } from "../../mocks/admin-db";
 import {
 	AdminService,
 	AdminSession,
@@ -14,7 +13,8 @@ import {
 	RestaurantListQuery,
 	RestaurantPatchRequest,
 	SyncResult,
-} from "./types";
+} from "#/apis/admin/types";
+import { adminMockDb } from "#/mocks/admin-db";
 
 const wait = (ms: number): Promise<void> =>
 	new Promise((resolve) => {

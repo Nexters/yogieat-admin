@@ -1,8 +1,9 @@
 import React from "react";
-import { CardList } from "./card";
-import { BarGraph } from "./progress";
-import { SelectCheckItem } from "./select-button";
-import { Tag } from "./tag";
+
+import { CardList } from "#/shared/ui/primitives/card";
+import { BarGraph } from "#/shared/ui/primitives/progress";
+import { SelectCheckItem } from "#/shared/ui/primitives/select-button";
+import { Tag } from "#/shared/ui/primitives/tag";
 
 function VoteRow({
 	label,

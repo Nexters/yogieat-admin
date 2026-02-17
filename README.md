@@ -78,15 +78,34 @@ REACT_APP_USE_MOCK_API=false
 ```text
 src/
   app/
-  pages/
-  widgets/
-  features/
+  apis/
+  hooks/
+  pageComponents/
+    auth/
+    common/
+    restaurants/
+    gatherings/
+    design-system/
+  providers/
   shared/
     ui/
       primitives/
+      composites/
     styles/
     config/
+packages/
+  api-client/
+  domain-types/
+  ui-tokens/
+  eslint-config/
+  tsconfig/
 ```
+
+## Import Alias
+
+- `#/* -> src/*` alias를 사용합니다.
+- CRA 환경에서는 `craco`로 webpack/jest alias를 설정했습니다.
+- import 순서는 `external -> #/* -> local(./*)` 규칙을 따릅니다.
 
 ## Design System Entry
 

@@ -1,4 +1,4 @@
-import { buildApiUrl } from "./api";
+import { buildApiUrl } from "#/shared/config/api";
 
 const JSON_CONTENT_TYPE = "application/json";
 

@@ -3,8 +3,8 @@
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
 import "@testing-library/jest-dom";
-import { TextDecoder, TextEncoder } from "util";
 import { TransformStream } from "stream/web";
+import { TextDecoder, TextEncoder } from "util";
 
 if (typeof global.TextEncoder === "undefined") {
 	global.TextEncoder = TextEncoder as unknown as typeof global.TextEncoder;
@@ -24,8 +24,8 @@ process.env.REACT_APP_API_URL =
 process.env.REACT_APP_USE_MOCK_API =
 	process.env.REACT_APP_USE_MOCK_API ?? "true";
 
-const { server } = require("./mocks/server");
-const { resetAdminMockData } = require("./mocks/admin-db");
+const { resetAdminMockData } = require("#/mocks/admin-db");
+const { server } = require("#/mocks/server");
 
 beforeAll(() => {
 	server.listen({ onUnhandledRequest: "bypass" });

@@ -1,4 +1,7 @@
 @import "./tokens.css";
+@import "./foundation-fonts.css";
+@import "./foundation-utilities.css";
+@import "./foundation-typography.css";
 @import "./admin-wireframe.css";
 
 *,

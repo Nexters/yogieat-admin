@@ -15,7 +15,7 @@ import {
 	RestaurantListQuery,
 	RestaurantPatchRequest,
 	SyncResult,
-} from "../apis/admin/types";
+} from "#/apis/admin/types";
 
 type InternalCategory = CategoryOption & {
 	largeCategory: string;
@@ -210,7 +210,7 @@ export const RESTAURANT_SEED: RestaurantDetail[] = [
 ];
 
 const GATHERING_ALLOWED_REGIONS = new Set(["HONGDAE", "GANGNAM"]);
-const GATHERING_ALLOWED_TIME_SLOTS = new Set(["LUNCH", "DINNER"]);
+const GATHERING_ALLOWED_TIME_SLOTS = new Set(["LUNCH", "DINNER", "BOTH"]);
 
 const normalizePreferenceToken = (value: string): string => {
 	const normalized = value.trim();

@@ -1,4 +1,4 @@
-import { APP_ENV, getBooleanEnv, getRequiredEnv } from "./env";
+import { APP_ENV, getBooleanEnv, getRequiredEnv } from "#/shared/config/env";
 
 describe("env config", () => {
 	const ORIGINAL_API_URL = process.env.REACT_APP_API_URL;

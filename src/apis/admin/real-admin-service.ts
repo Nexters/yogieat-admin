@@ -1,5 +1,3 @@
-import { ApiError, requestJson } from "../../shared/config";
-import { APP_ENV } from "../../shared/config/env";
 import {
 	AdminService,
 	AdminSession,
@@ -16,7 +14,9 @@ import {
 	RestaurantPatchRequest,
 	SyncResult,
 	TokenBundle,
-} from "./types";
+} from "#/apis/admin/types";
+import { ApiError, requestJson } from "#/shared/config";
+import { APP_ENV } from "#/shared/config/env";
 
 type ApiEnvelope<T> = T | { data: T };
 
