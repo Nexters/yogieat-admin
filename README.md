@@ -21,7 +21,10 @@ pnpm start
 - CRA에서는 클라이언트 환경 변수를 `REACT_APP_*` 규칙으로 사용합니다.
 - 이 프로젝트는 `yogieat`와 동일하게 `REACT_APP_API_URL`을 기본 도메인으로 받고,
   내부 API base를 `${REACT_APP_API_URL}/api/v1`로 조합합니다.
-- 현재는 환경 설정 레이어만 준비되어 있고, 실제 API 호출은 추후 연결합니다.
+- Admin API prefix는 `REACT_APP_ADMIN_API_PREFIX`로 제어하며 기본값은 `/api/v1/admin`입니다.
+- Admin API는 `mock`/`real` 모드 전환이 가능합니다.
+  - `REACT_APP_USE_MOCK_API=true`: 프론트 로컬 목 서비스 사용(네트워크 API 호출 없음, 기본값)
+  - `REACT_APP_USE_MOCK_API=false`: 실제 백엔드 API 호출
 
 ### Local setup
 
@@ -30,6 +33,8 @@ pnpm start
 
 ```bash
 REACT_APP_API_URL=https://dev-api.yogieat.com
+REACT_APP_ADMIN_API_PREFIX=/api/v1/admin
+REACT_APP_USE_MOCK_API=true
 ```
 
 ### Production setup
@@ -38,11 +43,25 @@ REACT_APP_API_URL=https://dev-api.yogieat.com
 
 ```bash
 REACT_APP_API_URL=https://api.yogieat.com
+REACT_APP_ADMIN_API_PREFIX=/api/v1/admin
+REACT_APP_USE_MOCK_API=false
 ```
 
 주의:
 - CRA 환경 변수는 **빌드 타임 주입**이므로 런타임에 변경되지 않습니다.
 - 환경 값 변경 후에는 재빌드가 필요합니다.
+
+### Admin API path convention
+
+- 로그인: `POST /api/v1/admin/auth/login`
+- 로그아웃: `POST /api/v1/admin/auth/logout`
+- 카테고리: `GET /api/v1/admin/sdui/categories`
+- 모임 목록: `GET /api/v1/admin/gatherings`
+- 모임 상세: `GET /api/v1/admin/gatherings/{id}`
+- 모임/참여자 대시보드: `GET /api/v1/admin/gatherings/dashboard`
+- 맛집 목록: `GET /api/v1/admin/restaurants`
+- 맛집 상세/수정: `GET|PUT /api/v1/admin/restaurants/{id}`
+- 단일/전체 동기화: `POST /api/v1/admin/restaurants/{id}/sync`, `POST /api/v1/admin/restaurants/sync`
 
 ## Scripts
 
