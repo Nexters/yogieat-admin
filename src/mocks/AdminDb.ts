@@ -16,6 +16,7 @@ import {
 	RestaurantPatchRequest,
 	SyncResult,
 } from "#/apis/admin/types";
+import { REGION_CODES } from "#/shared/constants";
 
 type InternalCategory = CategoryOption & {
 	largeCategory: string;
@@ -207,9 +208,37 @@ export const RESTAURANT_SEED: RestaurantDetail[] = [
 		createdAt: "2026-02-17T09:09:40.316Z",
 		updatedAt: "2026-02-17T09:09:40.316Z",
 	},
+	{
+		id: 5,
+		externalId: "13575898",
+		categoryId: 4,
+		name: "수정된 맛집명",
+		address: "서울 서초구 강남대로 435",
+		rating: 4.8,
+		imageUrl: "http://t1.daumcdn.net/cfile/166DC3354E4DE28425",
+		mapUrl: "https://place.map.kakao.com/13575898",
+		representativeReview:
+			"김포공항에는 항상 사람 많았는데 강남점은 6시 퇴근하고 바로 갔는데 4팀정도만 있었고 금방 들어갔음.\n회전초밥 집이 사실 거기서 거기지만 다양한 메뉴가 많고 활어 메뉴가 많으면 갈만 한듯.\n그런점에서 갓덴스시는 가격대가 좀 있지만 갈만 하다.\n고등어도 안비리고 제철메뉴가 다양함.\n굴찜은 주문 들어오면 쪄주기 때문에 강추. 알이 크고 부드러움.\n새우는 다른데랑 비슷함.",
+		description:
+			"신선한 재료로 만든 다양한 초밥을 합리적인 가격에 즐길 수 있는 회전초밥 전문점입니다. 눈앞에서 셰프가 직접 초밥을 만들어줍니다.",
+		region: "GANGNAM",
+		location: {
+			coordinates: [127.0276, 37.4979],
+		},
+		reviewCount: 369,
+		blogReviewCount: 623,
+		representMenu: "녹색접시",
+		representMenuPrice: 1500,
+		priceLevel: "₩₩₩",
+		aiMateSummaryTitle: "신선함 가득한 회전초밥의 즐거움",
+		aiMateSummaryContents: ["프라이빗룸"],
+		timeSlot: "LUNCH",
+		createdAt: "2026-02-16T03:04:45.122385",
+		updatedAt: "2026-02-19T15:59:21.172007",
+	},
 ];
 
-const GATHERING_ALLOWED_REGIONS = new Set(["HONGDAE", "GANGNAM"]);
+const GATHERING_ALLOWED_REGIONS = new Set<string>(REGION_CODES);
 const GATHERING_ALLOWED_TIME_SLOTS = new Set(["LUNCH", "DINNER", "BOTH"]);
 
 const normalizePreferenceToken = (value: string): string => {
@@ -238,21 +267,117 @@ const parsePreferenceTokens = (value: string): string[] => {
 
 export const GATHERING_SEED: GatheringItem[] = [
 	{
-		id: 1,
-		createdAt: "2026-02-16T16:03:33.731Z",
-		updatedAt: "2026-02-16T16:03:33.731Z",
+		id: 11,
+		createdAt: "2026-02-19T01:10:34.445364",
+		updatedAt: "2026-02-19T01:10:34.445364",
 		deletedAt: null,
-		accessKey: "7372aa49ff43",
-		peopleCount: 10,
-		region: "HONGDAE",
-		scheduledDate: "2026-03-03",
+		accessKey: "713284d84a61",
+		peopleCount: 3,
+		region: "GONGDEOK",
+		scheduledDate: "2026-02-27",
 		timeSlot: "DINNER",
 		title: null,
 	},
 	{
-		id: 2,
-		createdAt: "2026-02-16T15:38:11.564Z",
-		updatedAt: "2026-02-16T15:38:11.564Z",
+		id: 10,
+		createdAt: "2026-02-18T15:43:00.410446",
+		updatedAt: "2026-02-18T15:43:00.410446",
+		deletedAt: null,
+		accessKey: "1fe5ebc9d72f",
+		peopleCount: 2,
+		region: "GANGNAM",
+		scheduledDate: "2026-02-19",
+		timeSlot: "DINNER",
+		title: null,
+	},
+	{
+		id: 9,
+		createdAt: "2026-02-18T00:57:13.782593",
+		updatedAt: "2026-02-18T00:57:13.782593",
+		deletedAt: null,
+		accessKey: "706abf16dbdc",
+		peopleCount: 1,
+		region: "GONGDEOK",
+		scheduledDate: "2222-02-02",
+		timeSlot: "DINNER",
+		title: null,
+	},
+	{
+		id: 8,
+		createdAt: "2026-02-17T22:42:27.678486",
+		updatedAt: "2026-02-17T22:42:27.678486",
+		deletedAt: null,
+		accessKey: "535f0b7ff73f",
+		peopleCount: 2,
+		region: "GANGNAM",
+		scheduledDate: "2222-02-02",
+		timeSlot: "DINNER",
+		title: null,
+	},
+	{
+		id: 7,
+		createdAt: "2026-02-17T15:47:10.353532",
+		updatedAt: "2026-02-17T15:47:10.353532",
+		deletedAt: null,
+		accessKey: "45507c69c99d",
+		peopleCount: 1,
+		region: "JONGNO3GA",
+		scheduledDate: "2026-02-20",
+		timeSlot: "DINNER",
+		title: null,
+	},
+	{
+		id: 6,
+		createdAt: "2026-02-17T00:03:25.266977",
+		updatedAt: "2026-02-17T00:03:25.266977",
+		deletedAt: null,
+		accessKey: "da9a6bab29c6",
+		peopleCount: 9,
+		region: "GONGDEOK",
+		scheduledDate: "2026-02-28",
+		timeSlot: "LUNCH",
+		title: null,
+	},
+	{
+		id: 5,
+		createdAt: "2026-02-16T20:37:28.942752",
+		updatedAt: "2026-02-16T20:37:28.942752",
+		deletedAt: null,
+		accessKey: "aec2f00bb909",
+		peopleCount: 2,
+		region: "GANGNAM",
+		scheduledDate: "2026-02-17",
+		timeSlot: "DINNER",
+		title: null,
+	},
+	{
+		id: 4,
+		createdAt: "2026-02-16T20:23:19.837752",
+		updatedAt: "2026-02-16T20:23:19.837752",
+		deletedAt: null,
+		accessKey: "25df3b101aa9",
+		peopleCount: 2,
+		region: "GANGNAM",
+		scheduledDate: "2026-07-30",
+		timeSlot: "DINNER",
+		title: null,
+	},
+	{
+		id: 3,
+		createdAt: "2026-02-16T18:35:16.946246",
+		updatedAt: "2026-02-16T18:35:16.946246",
+		deletedAt: null,
+		accessKey: "b2c853e72ab2",
+		peopleCount: 3,
+		region: "GANGNAM",
+		scheduledDate: "2026-02-16",
+		timeSlot: "DINNER",
+		title: null,
+	},
+	{
+		id: 1,
+		createdAt: "2026-02-16T15:38:11.564744",
+		updatedAt: "2026-02-16T15:38:11.564744",
 		deletedAt: null,
 		accessKey: "9226479de98d",
 		peopleCount: 4,
@@ -261,13 +386,102 @@ export const GATHERING_SEED: GatheringItem[] = [
 		timeSlot: "DINNER",
 		title: null,
 	},
+	{
+		id: 2,
+		createdAt: "2026-02-16T16:03:33.731773",
+		updatedAt: "2026-02-16T16:03:33.731773",
+		deletedAt: null,
+		accessKey: "7372aa49ff43",
+		peopleCount: 10,
+		region: "HONGDAE",
+		scheduledDate: "2026-03-03",
+		timeSlot: "DINNER",
+		title: null,
+	},
 ];
 
 export const PARTICIPANT_SEED: ParticipantItem[] = [
 	{
-		id: 1,
-		createdAt: "2026-02-16T16:31:47.562Z",
-		updatedAt: "2026-02-16T16:31:47.562Z",
+		id: 11,
+		createdAt: null,
+		updatedAt: null,
+		gatheringId: 10,
+		nickname: "백광인",
+		role: "MEMBER",
+		distanceRange: "RANGE_500M",
+		preferences: parsePreferenceTokens("KOREAN,JAPANESE,ANY"),
+		dislikes: "ASIAN",
+	},
+	{
+		id: 10,
+		createdAt: null,
+		updatedAt: null,
+		gatheringId: 9,
+		nickname: "영민",
+		role: "MEMBER",
+		distanceRange: "RANGE_1KM",
+		preferences: parsePreferenceTokens("ASIAN,CHINESE,ANY"),
+		dislikes: "WESTERN,JAPANESE",
+	},
+	{
+		id: 9,
+		createdAt: null,
+		updatedAt: null,
+		gatheringId: 8,
+		nickname: "위",
+		role: "MEMBER",
+		distanceRange: "RANGE_500M",
+		preferences: parsePreferenceTokens("JAPANESE"),
+		dislikes: "WESTERN",
+	},
+	{
+		id: 8,
+		createdAt: null,
+		updatedAt: null,
+		gatheringId: 7,
+		nickname: "윤범차",
+		role: "MEMBER",
+		distanceRange: "RANGE_500M",
+		preferences: parsePreferenceTokens("한식,일식,중식"),
+		dislikes: "ANY",
+	},
+	{
+		id: 4,
+		createdAt: null,
+		updatedAt: null,
+		gatheringId: 2,
+		nickname: "테스트삼번",
+		role: "MEMBER",
+		distanceRange: "RANGE_1KM",
+		preferences: parsePreferenceTokens("ASIAN,CHINESE,ANY"),
+		dislikes: "KOREAN",
+	},
+	{
+		id: 5,
+		createdAt: null,
+		updatedAt: null,
+		gatheringId: 2,
+		nickname: "테스트이번",
+		role: "MEMBER",
+		distanceRange: "RANGE_500M",
+		preferences: parsePreferenceTokens("JAPANESE,CHINESE"),
+		dislikes: "ASIAN",
+	},
+	{
+		id: 6,
+		createdAt: null,
+		updatedAt: null,
+		gatheringId: 2,
+		nickname: "백광인",
+		role: "MEMBER",
+		distanceRange: "RANGE_1KM",
+		preferences: parsePreferenceTokens("CHINESE,JAPANESE,ANY"),
+		dislikes: "WESTERN",
+	},
+	{
+		id: 7,
+		createdAt: null,
+		updatedAt: null,
 		gatheringId: 2,
 		nickname: "백루키",
 		role: "MEMBER",
@@ -276,17 +490,39 @@ export const PARTICIPANT_SEED: ParticipantItem[] = [
 		dislikes: "KOREAN",
 	},
 	{
+		id: 1,
+		createdAt: null,
+		updatedAt: null,
+		gatheringId: 1,
+		nickname: "테스트일번",
+		role: "MEMBER",
+		distanceRange: "RANGE_1KM",
+		preferences: parsePreferenceTokens("WESTERN,JAPANESE,ASIAN"),
+		dislikes: "KOREAN",
+	},
+	{
 		id: 2,
-		createdAt: "2026-02-17T15:47:46.621Z",
-		updatedAt: "2026-02-17T15:47:46.621Z",
-		gatheringId: 7,
-		nickname: "윤범차",
+		createdAt: null,
+		updatedAt: null,
+		gatheringId: 1,
+		nickname: "테스트이번",
 		role: "MEMBER",
 		distanceRange: "RANGE_500M",
-		preferences: parsePreferenceTokens("한식,일식,중식"),
-		dislikes: "ANY",
+		preferences: parsePreferenceTokens("ASIAN,CHINESE"),
+		dislikes: "JAPANESE",
 	},
-];
+	{
+		id: 3,
+		createdAt: null,
+		updatedAt: null,
+		gatheringId: 1,
+		nickname: "테스트삼번",
+		role: "MEMBER",
+		distanceRange: "RANGE_1KM",
+		preferences: parsePreferenceTokens("CHINESE,JAPANESE"),
+		dislikes: "ASIAN",
+	},
+};
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
@@ -499,7 +735,7 @@ const toFillRate = (participantCount: number, peopleCount: number): number => {
 		return 0;
 	}
 
-	return Number(((participantCount / peopleCount) * 100).toFixed(1));
+	return Number((participantCount / peopleCount).toFixed(1));
 };
 
 const toGatheringListItem = (
@@ -585,12 +821,7 @@ const buildGatheringDataIssues = (
 	});
 
 	if (issues.length === 0) {
-		issues.push({
-			id: "health-ok",
-			severity: "INFO",
-			title: "데이터 상태 정상",
-			description: "현재 탐지된 데이터 정합성 이슈가 없습니다.",
-		});
+		return issues;
 	}
 
 	return issues;
@@ -632,11 +863,25 @@ export const adminMockDb = {
 	},
 
 	getGatheringDashboard(): GatheringDashboardData {
-		const gatherings = clone(state.gatherings).sort((a, b) =>
-			a.scheduledDate.localeCompare(b.scheduledDate),
+		const participantCountByGathering = toParticipantCountByGathering(
+			state.participants,
 		);
+		const gatherings = clone(state.gatherings)
+			.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+			.map((gathering) => {
+				const participantCount =
+					participantCountByGathering.get(gathering.id) ?? 0;
+
+				return {
+					...gathering,
+					participantCount,
+					fillRate: toFillRate(participantCount, gathering.peopleCount),
+				};
+			});
 		const participants = clone(state.participants).sort((a, b) =>
-			b.updatedAt.localeCompare(a.updatedAt),
+			b.gatheringId !== a.gatheringId
+				? (b.gatheringId ?? 0) - (a.gatheringId ?? 0)
+				: a.id - b.id,
 		);
 		const issues = buildGatheringDataIssues(gatherings, participants);
 
@@ -669,7 +914,7 @@ export const adminMockDb = {
 			.filter((gathering) =>
 				includeGatheringByTimeSlot(gathering, query.timeSlot),
 			)
-			.sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))
+			.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 			.map((gathering) =>
 				toGatheringListItem(gathering, participantCountByGathering),
 			);
@@ -686,14 +931,19 @@ export const adminMockDb = {
 		const participants = state.participants
 			.filter((participant) => participant.gatheringId === id)
 			.map((participant) => clone(participant))
-			.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+			.sort((a, b) => a.id - b.id);
 		const participantCount = participants.length;
+		const fillRate = toFillRate(participantCount, gathering.peopleCount);
 
 		return {
-			gathering: clone(gathering),
+			gathering: {
+				...clone(gathering),
+				participantCount,
+				fillRate,
+			},
 			participants,
 			participantCount,
-			fillRate: toFillRate(participantCount, gathering.peopleCount),
+			fillRate,
 		};
 	},
 

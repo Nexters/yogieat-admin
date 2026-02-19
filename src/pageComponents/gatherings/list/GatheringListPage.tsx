@@ -49,6 +49,11 @@ const formatDateTime = (value: string): string =>
 		hour12: false,
 	}).format(new Date(value));
 
+const toFillRatePercent = (fillRate: number): string => {
+	const normalized = fillRate <= 1 ? fillRate * 100 : fillRate;
+	return `${normalized.toFixed(1)}%`;
+};
+
 const resolveGatheringTitle = (gathering: GatheringListItem): string => {
 	if (gathering.title?.trim()) {
 		return gathering.title;
@@ -340,7 +345,7 @@ export function GatheringListPage() {
 										</td>
 										<td>{gathering.peopleCount}</td>
 										<td>{gathering.participantCount}</td>
-										<td>{gathering.fillRate}%</td>
+										<td>{toFillRatePercent(gathering.fillRate)}</td>
 										<td>
 											{formatDateTime(
 												gathering.updatedAt,
@@ -426,7 +431,9 @@ export function GatheringListPage() {
 									<span>
 										참여자: {gathering.participantCount}
 									</span>
-									<span>충족률: {gathering.fillRate}%</span>
+									<span>
+										충족률: {toFillRatePercent(gathering.fillRate)}
+									</span>
 								</div>
 							</article>
 						))}

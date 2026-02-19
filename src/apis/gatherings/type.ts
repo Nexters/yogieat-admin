@@ -52,8 +52,8 @@ export type ParticipantItem = {
 	distanceRange: ParticipantDistanceRange;
 	preferences: string[];
 	dislikes: string;
-	createdAt: string;
-	updatedAt: string;
+	createdAt: string | null;
+	updatedAt: string | null;
 };
 
 export type DataIssue = {
@@ -66,13 +66,19 @@ export type DataIssue = {
 
 export type GatheringDashboardData = {
 	generatedAt: string;
-	gatherings: GatheringItem[];
+	gatherings: (GatheringItem & {
+		participantCount: number;
+		fillRate: number;
+	})[];
 	participants: ParticipantItem[];
 	issues: DataIssue[];
 };
 
 export type GatheringDetail = {
-	gathering: GatheringItem;
+	gathering: GatheringItem & {
+		participantCount: number;
+		fillRate: number;
+	};
 	participants: ParticipantItem[];
 	participantCount: number;
 	fillRate: number;

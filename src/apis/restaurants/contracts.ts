@@ -23,7 +23,7 @@ export const RESTAURANT_ENDPOINT_CONTRACTS = {
 		response: "RestaurantDetail | null",
 	},
 	updateRestaurant: {
-		method: "PUT",
+		method: "PATCH",
 		path: "/restaurants/:id",
 		request: "RestaurantPatchRequest",
 		response: "RestaurantDetail",

@@ -29,6 +29,15 @@ const formatDateTime = (value: string): string =>
 		hour12: false,
 	}).format(new Date(value));
 
+const toFillRatePercent = (fillRate: number): string => {
+	const normalized = fillRate <= 1 ? fillRate * 100 : fillRate;
+	return `${normalized.toFixed(1)}%`;
+};
+
+const formatOptionalDateTime = (value: string | null | undefined): string => {
+	return value ? formatDateTime(value) : "-";
+};
+
 const resolveGatheringTitle = (
 	detail: GatheringDetail | null,
 	fallbackId: number,
@@ -209,7 +218,9 @@ export function GatheringDetailPage() {
 					</label>
 					<label className="admin-field">
 						<span>충족률</span>
-						<div className="admin-readonly">{detail.fillRate}%</div>
+						<div className="admin-readonly">
+							{toFillRatePercent(detail.fillRate)}
+						</div>
 					</label>
 					<label className="admin-field">
 						<span>삭제 상태</span>
@@ -266,7 +277,9 @@ export function GatheringDetailPage() {
 									</td>
 									<td>{participant.dislikes}</td>
 									<td>
-										{formatDateTime(participant.updatedAt)}
+										{formatOptionalDateTime(
+											participant.updatedAt,
+										)}
 									</td>
 								</tr>
 							))}
@@ -301,7 +314,9 @@ export function GatheringDetailPage() {
 								<span>비선호: {participant.dislikes}</span>
 								<span>
 									수정일:{" "}
-									{formatDateTime(participant.updatedAt)}
+										{formatOptionalDateTime(
+											participant.updatedAt,
+										)}
 								</span>
 							</div>
 						</article>

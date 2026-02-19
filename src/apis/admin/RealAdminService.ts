@@ -524,7 +524,7 @@ export const realAdminService: AdminService = {
 		const response = await requestWithAutoRefresh<RestaurantDetail>(
 			getByIdPath(id),
 			{
-				method: "PUT",
+				method: "PATCH",
 				body: patch,
 			},
 		);

@@ -65,7 +65,7 @@ const parseRestaurantListQuery = (url: URL): RestaurantListQuery => {
 
 const parseGatheringListQuery = (url: URL): GatheringListQuery => {
 	const page = toNumberOrDefault(url.searchParams.get("page"), 0);
-	const size = toNumberOrDefault(url.searchParams.get("size"), 12);
+	const size = toNumberOrDefault(url.searchParams.get("size"), 10);
 	const keyword = url.searchParams.get("keyword") ?? undefined;
 	const region = url.searchParams.get("region") ?? undefined;
 	const rawTimeSlot = url.searchParams.get("timeSlot");
@@ -145,17 +145,13 @@ export const handlers = [
 			}
 
 			const seed = Date.now();
-			const accessTokenExpiresIn = 1000 * 60 * 60;
-			const refreshTokenExpiresIn = 7 * 24 * 60 * 60 * 1000;
 			return response(
 				ctx.delay(DEFAULT_DELAY_MS),
 				ctx.json(
 					createSuccessResponse({
 						accessToken: `mock-access-${seed}`,
 						refreshToken: `mock-refresh-${seed}`,
-						tokenType: "Bearer",
-						accessTokenExpiresIn,
-						refreshTokenExpiresIn,
+						expiresAt: new Date(seed + 1000 * 60 * 60).toISOString(),
 					}),
 				),
 			);
@@ -165,24 +161,21 @@ export const handlers = [
 	rest.post("*/api/v1/admin/auth/login", async (request, response, ctx) => {
 		const payload = (await request.json()) as LoginRequest;
 
-		try {
-			const session = adminMockDb.login(payload);
-			const accessTokenExpiresIn = 1000 * 60 * 60;
-			const refreshTokenExpiresIn = 7 * 24 * 60 * 60 * 1000;
+			try {
+				const session = adminMockDb.login(payload);
 
-			return response(
-				ctx.delay(DEFAULT_DELAY_MS),
+				return response(
+					ctx.delay(DEFAULT_DELAY_MS),
 				ctx.json(
-					createSuccessResponse({
-						accessToken: session.tokenBundle.accessToken,
-						refreshToken: session.tokenBundle.refreshToken,
-						tokenType: "Bearer",
-						accessTokenExpiresIn,
-						refreshTokenExpiresIn,
-						adminId: session.adminId,
-						name: session.name,
-						roles: session.roles,
-					}),
+						createSuccessResponse({
+							accessToken: session.tokenBundle.accessToken,
+							refreshToken: session.tokenBundle.refreshToken,
+							tokenType: "Bearer",
+							expiresAt: session.tokenBundle.expiresAt,
+							adminId: session.adminId,
+							name: session.name,
+							roles: session.roles,
+						}),
 				),
 			);
 		} catch (error) {
@@ -301,6 +294,41 @@ export const handlers = [
 			}
 
 			return response(ctx.delay(180), ctx.json(createSuccessResponse(restaurant)));
+		},
+	),
+
+	rest.patch(
+		"*/api/v1/admin/restaurants/:restaurantId",
+		async (request, response, ctx) => {
+			const restaurantId = parseResourceId(
+				request.params.restaurantId as string | undefined,
+			);
+			const payload = (await request.json()) as RestaurantPatchRequest;
+
+			try {
+				const updatedRestaurant = adminMockDb.updateRestaurant(
+					restaurantId,
+					payload,
+				);
+				return response(
+					ctx.delay(DEFAULT_DELAY_MS),
+					ctx.json(createSuccessResponse(updatedRestaurant)),
+				);
+			} catch (error) {
+				return response(
+					ctx.delay(DEFAULT_DELAY_MS),
+					ctx.status(404),
+					ctx.json(
+						createErrorResponse(
+							404,
+							RESTAURANT_ERROR_CODE.NOT_FOUND,
+							error instanceof Error
+								? error.message
+								: "맛집 수정에 실패했습니다.",
+						),
+					),
+				);
+			}
 		},
 	),
 
