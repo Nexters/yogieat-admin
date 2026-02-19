@@ -22,7 +22,7 @@ describe("admin service mode selector", () => {
 		process.env.REACT_APP_API_URL = "https://dev-api.yogieat.com";
 		delete process.env.REACT_APP_USE_MOCK_API;
 
-		const { ADMIN_API_MODE } = require("#/apis/admin/admin-service");
+		const { ADMIN_API_MODE } = require("#/apis/admin/AdminService");
 		expect(ADMIN_API_MODE).toBe("mock");
 	});
 
@@ -30,7 +30,7 @@ describe("admin service mode selector", () => {
 		process.env.REACT_APP_API_URL = "https://dev-api.yogieat.com";
 		process.env.REACT_APP_USE_MOCK_API = "false";
 
-		const { ADMIN_API_MODE } = require("#/apis/admin/admin-service");
+		const { ADMIN_API_MODE } = require("#/apis/admin/AdminService");
 		expect(ADMIN_API_MODE).toBe("real");
 	});
 
@@ -41,7 +41,7 @@ describe("admin service mode selector", () => {
 		const {
 			ADMIN_API_MODE,
 			adminService,
-		} = require("#/apis/admin/admin-service");
+		} = require("#/apis/admin/AdminService");
 		expect(ADMIN_API_MODE).toBe("mock");
 		expect(typeof adminService.login).toBe("function");
 	});

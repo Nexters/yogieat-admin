@@ -2,7 +2,7 @@ import React from "react";
 
 import type { CategoryOption } from "#/apis/restaurants";
 import type { CategoryGroup } from "#/pageComponents/restaurants/detail/types";
-import { toLargeCategoryLabel } from "#/shared/constants/domain-labels";
+import { toLargeCategoryLabel } from "#/shared/constants/DomainLabels";
 import { Button } from "#/shared/ui";
 
 type CategoryPickerProps = {

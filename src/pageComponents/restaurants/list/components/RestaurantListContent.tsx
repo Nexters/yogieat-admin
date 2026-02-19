@@ -2,7 +2,7 @@ import React from "react";
 
 import type { RestaurantListItem } from "#/apis/restaurants";
 import { RestaurantThumbnail } from "#/pageComponents/restaurants/list/components/RestaurantThumbnail";
-import { toRegionLabel } from "#/shared/constants/domain-labels";
+import { toRegionLabel } from "#/shared/constants/DomainLabels";
 import { Button } from "#/shared/ui";
 
 const formatDateTime = (value: string) =>

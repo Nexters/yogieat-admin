@@ -1,4 +1,4 @@
-export * from "./admin-service";
-export * from "./local-admin-service";
-export * from "./mock-data";
+export * from "./AdminService";
+export * from "./LocalAdminService";
+export * from "./MockData";
 export * from "./types";

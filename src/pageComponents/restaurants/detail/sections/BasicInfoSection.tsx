@@ -17,7 +17,7 @@ import type {
 import {
 	toRegionLabel,
 	toTimeSlotLabel,
-} from "#/shared/constants/domain-labels";
+} from "#/shared/constants/DomainLabels";
 
 type BasicInfoSectionProps = {
 	activeLargeCategory?: string;

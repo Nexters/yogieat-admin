@@ -2,7 +2,7 @@ import React from "react";
 
 import { CardList } from "#/shared/ui/primitives/card";
 import { BarGraph } from "#/shared/ui/primitives/progress";
-import { SelectCheckItem } from "#/shared/ui/primitives/select-button";
+import { SelectCheckItem } from "#/shared/ui/primitives/SelectButton";
 import { Tag } from "#/shared/ui/primitives/tag";
 
 function VoteRow({

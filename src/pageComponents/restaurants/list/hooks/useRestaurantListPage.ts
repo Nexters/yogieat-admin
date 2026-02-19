@@ -16,7 +16,7 @@ import {
 	LARGE_CATEGORY_CODES,
 	REGION_CODES,
 	toLargeCategoryLabel,
-} from "#/shared/constants/domain-labels";
+} from "#/shared/constants/DomainLabels";
 import { useAutoDismissToast } from "#/shared/hooks";
 import { getErrorMessage } from "#/shared/utils";
 

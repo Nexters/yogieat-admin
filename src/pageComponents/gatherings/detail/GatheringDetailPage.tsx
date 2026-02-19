@@ -8,7 +8,7 @@ import { useAuth } from "#/providers";
 import {
 	toRegionLabel,
 	toTimeSlotLabel,
-} from "#/shared/constants/domain-labels";
+} from "#/shared/constants/DomainLabels";
 import { AdminTopbar, Button } from "#/shared/ui";
 import { getErrorMessage } from "#/shared/utils";
 

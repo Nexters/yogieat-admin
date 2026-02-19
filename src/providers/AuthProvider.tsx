@@ -3,6 +3,7 @@ import React, {
 	createContext,
 	useCallback,
 	useContext,
+	useEffect,
 	useMemo,
 	useState,
 } from "react";
@@ -17,6 +18,7 @@ import {
 const ACCESS_TOKEN_KEY = "admin_access_token";
 const REFRESH_TOKEN_KEY = "admin_refresh_token";
 const SESSION_KEY = "admin_session";
+const AUTH_SESSION_UPDATED_EVENT = "admin-session-updated";
 
 export const AUTH_STORAGE_KEYS = {
 	ACCESS_TOKEN_KEY,
@@ -49,7 +51,7 @@ const isValidSession = (session: AdminSession): boolean => {
 		return false;
 	}
 
-	return expiresAtTime > Date.now();
+	return true;
 };
 
 const readStoredSession = (): AdminSession | null => {
@@ -106,6 +108,41 @@ export function AuthProvider({ children }: PropsWithChildren) {
 	const [session, setSession] = useState<AdminSession | null>(() =>
 		readStoredSession(),
 	);
+
+	useEffect(() => {
+		if (!isBrowser()) {
+			return;
+		}
+
+		const syncSessionFromStorage = () => {
+			setSession(readStoredSession());
+		};
+
+		const onStorage = (event: StorageEvent) => {
+			if (
+				!event.key ||
+				event.key === SESSION_KEY ||
+				event.key === ACCESS_TOKEN_KEY ||
+				event.key === REFRESH_TOKEN_KEY
+			) {
+				syncSessionFromStorage();
+			}
+		};
+
+		window.addEventListener("storage", onStorage);
+		window.addEventListener(
+			AUTH_SESSION_UPDATED_EVENT,
+			syncSessionFromStorage as EventListener,
+		);
+
+		return () => {
+			window.removeEventListener("storage", onStorage);
+			window.removeEventListener(
+				AUTH_SESSION_UPDATED_EVENT,
+				syncSessionFromStorage as EventListener,
+			);
+		};
+	}, []);
 
 	const login = useCallback(async (request: LoginRequest) => {
 		const nextSession = await loginApi(request);

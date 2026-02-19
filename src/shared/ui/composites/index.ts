@@ -1,1 +1,1 @@
-export * from "#/shared/ui/composites/admin-topbar";
+export * from "#/shared/ui/composites/AdminTopbar";

@@ -3,7 +3,7 @@ import {
 	REGION_CODES,
 	TIME_SLOT_CODES,
 	toLargeCategoryLabel,
-} from "#/shared/constants/domain-labels";
+} from "#/shared/constants/DomainLabels";
 
 export const REGION_OPTIONS = REGION_CODES;
 

@@ -1,8 +1,8 @@
 @import "./tokens.css";
-@import "./foundation-fonts.css";
-@import "./foundation-utilities.css";
-@import "./foundation-typography.css";
-@import "./admin-wireframe.css";
+@import "./FoundationFonts.css";
+@import "./FoundationUtilities.css";
+@import "./FoundationTypography.css";
+@import "./AdminWireframe.css";
 
 *,
 *::before,

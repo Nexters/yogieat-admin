@@ -1,4 +1,4 @@
-import { resetAdminMockData } from "#/mocks/admin-db";
+import { resetAdminMockData } from "#/mocks/AdminDb";
 
 export const startMockWorker = async () => {
 	const { worker } = await import("#/mocks/browser");

@@ -23,7 +23,7 @@ type InternalCategory = CategoryOption & {
 };
 
 const LOGIN_CREDENTIALS = {
-	userId: "admin",
+	loginId: "admin",
 	password: "admin1234",
 };
 
@@ -601,9 +601,9 @@ export const adminMockDb = {
 		state = createInitialState();
 	},
 
-	login({ password, userId }: LoginRequest): AdminSession {
+	login({ password, loginId }: LoginRequest): AdminSession {
 		if (
-			userId.trim() !== LOGIN_CREDENTIALS.userId ||
+			loginId.trim() !== LOGIN_CREDENTIALS.loginId ||
 			password !== LOGIN_CREDENTIALS.password
 		) {
 			throw new Error("아이디 또는 비밀번호가 올바르지 않습니다.");

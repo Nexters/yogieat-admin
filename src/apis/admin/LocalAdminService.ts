@@ -14,7 +14,7 @@ import {
 	RestaurantPatchRequest,
 	SyncResult,
 } from "#/apis/admin/types";
-import { adminMockDb } from "#/mocks/admin-db";
+import { adminMockDb } from "#/mocks/AdminDb";
 
 const wait = (ms: number): Promise<void> =>
 	new Promise((resolve) => {

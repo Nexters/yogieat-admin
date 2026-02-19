@@ -9,7 +9,7 @@ import {
 import {
 	toRegionLabel,
 	toTimeSlotLabel,
-} from "#/shared/constants/domain-labels";
+} from "#/shared/constants/DomainLabels";
 
 type ScheduleSectionProps = {
 	gatherings: GatheringItem[];

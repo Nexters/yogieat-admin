@@ -31,7 +31,7 @@ export function LoginPage() {
 
 		try {
 			await login({
-				userId: userId.trim(),
+				loginId: userId.trim(),
 				password,
 			});
 			navigate(redirectTo, { replace: true });

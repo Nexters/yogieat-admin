@@ -1,10 +1,9 @@
 import { CategoryOption, RestaurantDetail } from "#/apis/admin/types";
-import { CATEGORY_SEED, RESTAURANT_SEED } from "#/mocks/admin-db";
+import { CATEGORY_SEED, RESTAURANT_SEED } from "#/mocks/AdminDb";
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
-// Backward-compatible exports for modules that still import mock-data.ts.
-// The source of truth lives in src/mocks/admin-db.ts.
+// This module now exposes admin mock fixtures from src/mocks/AdminDb.ts.
 export const CATEGORY_OPTIONS: CategoryOption[] = CATEGORY_SEED.map(
 	(category) => ({
 		...clone(category),

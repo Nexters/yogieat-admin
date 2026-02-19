@@ -1,7 +1,10 @@
 export type TokenBundle = {
 	accessToken: string;
 	refreshToken: string;
+	tokenType?: string;
 	expiresAt: string;
+	accessTokenExpiresIn?: number;
+	refreshTokenExpiresIn?: number;
 };
 
 export type AdminSession = {
@@ -12,6 +15,10 @@ export type AdminSession = {
 };
 
 export type LoginRequest = {
-	userId: string;
+	loginId: string;
 	password: string;
+};
+
+export type RefreshTokenRequest = {
+	refreshToken: string;
 };

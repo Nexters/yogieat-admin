@@ -5,7 +5,7 @@ import {
 	ALL_FILTER_VALUE,
 	toLargeCategoryFilterLabel,
 	toRegionFilterLabel,
-} from "#/shared/constants/domain-labels";
+} from "#/shared/constants/DomainLabels";
 import { Button } from "#/shared/ui";
 
 type RestaurantListControlsProps = {

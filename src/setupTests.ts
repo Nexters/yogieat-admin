@@ -24,7 +24,7 @@ process.env.REACT_APP_API_URL =
 process.env.REACT_APP_USE_MOCK_API =
 	process.env.REACT_APP_USE_MOCK_API ?? "true";
 
-const { resetAdminMockData } = require("#/mocks/admin-db");
+const { resetAdminMockData } = require("#/mocks/AdminDb");
 const { server } = require("#/mocks/server");
 
 beforeAll(() => {

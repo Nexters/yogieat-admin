@@ -11,7 +11,7 @@ import type {
 import {
 	toRegionLabel,
 	toTimeSlotLabel,
-} from "#/shared/constants/domain-labels";
+} from "#/shared/constants/DomainLabels";
 import { useAutoDismissToast } from "#/shared/hooks";
 import { getErrorMessage } from "#/shared/utils";
 
