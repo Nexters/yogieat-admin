@@ -522,7 +522,7 @@ export const PARTICIPANT_SEED: ParticipantItem[] = [
 		preferences: parsePreferenceTokens("CHINESE,JAPANESE"),
 		dislikes: "ASIAN",
 	},
-};
+];
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
