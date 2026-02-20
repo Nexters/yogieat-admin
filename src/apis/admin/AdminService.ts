@@ -5,8 +5,10 @@ import { APP_ENV } from "#/shared/config/env";
 
 export const ADMIN_API_MODE = APP_ENV.USE_MOCK_API ? "mock" : "real";
 
-const resolveAdminService = (): AdminService => {
-	if (ADMIN_API_MODE === "mock") {
+type AdminApiMode = "mock" | "real";
+
+const resolveAdminService = (mode: AdminApiMode): AdminService => {
+	if (mode === "mock") {
 		return localAdminService;
 	}
 
@@ -17,10 +19,22 @@ const resolveAdminService = (): AdminService => {
 	return realAdminService;
 };
 
-export const adminService: AdminService = resolveAdminService();
+const resolveInitialMode = (): AdminApiMode => ADMIN_API_MODE;
+let currentMode = resolveInitialMode();
+export let adminService: AdminService = resolveAdminService(currentMode);
+
+export const setAdminServiceMode = (mode: AdminApiMode): void => {
+	if (mode === currentMode) {
+		return;
+	}
+	currentMode = mode;
+	adminService = resolveAdminService(currentMode);
+};
+
+export const getAdminServiceMode = (): AdminApiMode => currentMode;
 
 export const resetAdminMockData = () => {
-	if (ADMIN_API_MODE === "mock") {
+	if (currentMode === "mock") {
 		resetMockData();
 	}
 };

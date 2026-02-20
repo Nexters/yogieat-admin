@@ -18,8 +18,8 @@ import type {
 	RestaurantListItem,
 	RestaurantListQuery,
 	RestaurantPatchRequest,
-	SyncResult,
-	SyncStatus,
+	CreateRestaurantSyncJobResponse,
+	GetRestaurantSyncJobResponse,
 	TimeSlot,
 } from "#/apis/restaurants";
 
@@ -42,8 +42,8 @@ export type {
 	RestaurantListItem,
 	RestaurantListQuery,
 	RestaurantPatchRequest,
-	SyncResult,
-	SyncStatus,
+	CreateRestaurantSyncJobResponse,
+	GetRestaurantSyncJobResponse,
 	TimeSlot,
 	TokenBundle,
 };
@@ -65,6 +65,9 @@ export type AdminService = {
 		id: number,
 		patch: RestaurantPatchRequest,
 	) => Promise<RestaurantDetail>;
-	syncRestaurant: (id: number) => Promise<SyncResult>;
-	syncAllRestaurants: () => Promise<SyncResult>;
+	syncRestaurant: (id: number) => Promise<CreateRestaurantSyncJobResponse>;
+	syncAllRestaurants: () => Promise<CreateRestaurantSyncJobResponse>;
+	getSyncRestaurantJob: (
+		jobId: number,
+	) => Promise<GetRestaurantSyncJobResponse>;
 };

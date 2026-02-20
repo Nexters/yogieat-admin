@@ -2,9 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 
 import { restaurantQueryOptions } from "#/apis/restaurants";
 
-export const useGetCategories = (enabled = true) => {
+export const useGetSyncRestaurantJob = (
+	jobId: number,
+	enabled = true,
+) => {
 	return useQuery({
-		...restaurantQueryOptions.categories(),
+		...restaurantQueryOptions.syncJob(jobId),
 		enabled,
 	});
 };

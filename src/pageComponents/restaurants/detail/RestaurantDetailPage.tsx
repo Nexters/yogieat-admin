@@ -41,6 +41,7 @@ export function RestaurantDetailPage() {
 		restaurant,
 		selectedCategory,
 		selectedCategoryInDraft,
+		selectedCategoryLabel,
 		setActiveLargeCategory,
 		setCategoryId,
 		setCategoryKeyword,
@@ -177,6 +178,7 @@ export function RestaurantDetailPage() {
 						restaurant={restaurant}
 						selectedCategory={selectedCategory}
 						selectedCategoryInDraft={selectedCategoryInDraft}
+						selectedCategoryLabel={selectedCategoryLabel}
 						toCategoryLabel={toCategoryLabel}
 					/>
 					<LocationSection

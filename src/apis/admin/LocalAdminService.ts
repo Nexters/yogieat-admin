@@ -12,7 +12,8 @@ import {
 	RestaurantListItem,
 	RestaurantListQuery,
 	RestaurantPatchRequest,
-	SyncResult,
+	CreateRestaurantSyncJobResponse,
+	GetRestaurantSyncJobResponse,
 } from "#/apis/admin/types";
 import { adminMockDb } from "#/mocks/AdminDb";
 
@@ -70,11 +71,17 @@ export const localAdminService: AdminService = {
 		return withDelay(220, () => adminMockDb.updateRestaurant(id, patch));
 	},
 
-	syncRestaurant(id: number): Promise<SyncResult> {
+	syncRestaurant(id: number): Promise<CreateRestaurantSyncJobResponse> {
 		return withDelay(260, () => adminMockDb.syncRestaurant(id));
 	},
 
-	syncAllRestaurants(): Promise<SyncResult> {
+	syncAllRestaurants(): Promise<CreateRestaurantSyncJobResponse> {
 		return withDelay(420, () => adminMockDb.syncAllRestaurants());
+	},
+
+	getSyncRestaurantJob(
+		jobId: number,
+	): Promise<GetRestaurantSyncJobResponse> {
+		return withDelay(180, () => adminMockDb.getSyncRestaurantJob(jobId));
 	},
 };

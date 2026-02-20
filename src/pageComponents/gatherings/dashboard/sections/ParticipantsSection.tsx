@@ -2,6 +2,11 @@ import React from "react";
 
 import type { GatheringItem, ParticipantItem } from "#/apis/gatherings";
 import { resolveGatheringLabel } from "#/pageComponents/gatherings/dashboard/constants";
+import {
+	toDistanceRangeLabel,
+	toLargeCategoryLabel,
+	toParticipantRoleLabel,
+} from "#/shared/constants/DomainLabels";
 
 type ParticipantsSectionProps = {
 	gatheringById: Record<number, GatheringItem>;
@@ -36,12 +41,23 @@ export function ParticipantsSection({
 								typeof participant.gatheringId === "number"
 									? gatheringById[participant.gatheringId]
 									: undefined;
+							const preferences = participant.preferences
+								.map((preference) =>
+									toLargeCategoryLabel(preference),
+								)
+								.join(", ");
+							const dislikes = (participant.dislikes ?? "")
+								.split(",")
+								.map((dislike) => dislike.trim())
+								.filter(Boolean)
+								.map((dislike) => toLargeCategoryLabel(dislike))
+								.join(", ");
 
 							return (
 								<tr key={participant.id}>
 									<td>{participant.id}</td>
 									<td>{participant.nickname}</td>
-									<td>{participant.role}</td>
+									<td>{toParticipantRoleLabel(participant.role)}</td>
 									<td>
 										{linkedGathering
 											? resolveGatheringLabel(
@@ -52,11 +68,11 @@ export function ParticipantsSection({
 													"-"
 												})`}
 									</td>
-									<td>{participant.distanceRange}</td>
 									<td>
-										{participant.preferences.join(", ")}
+										{toDistanceRangeLabel(participant.distanceRange)}
 									</td>
-									<td>{participant.dislikes}</td>
+									<td>{preferences}</td>
+									<td>{dislikes}</td>
 								</tr>
 							);
 						})}

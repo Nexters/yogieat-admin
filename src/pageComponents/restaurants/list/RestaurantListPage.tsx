@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
+import { getAdminServiceMode } from "#/apis/admin";
 import {
 	RestaurantListContent,
 	RestaurantListControls,
@@ -8,16 +9,14 @@ import {
 } from "#/pageComponents/restaurants/list/components";
 import { useRestaurantListPage } from "#/pageComponents/restaurants/list/hooks/useRestaurantListPage";
 import { useAuth } from "#/providers";
-import { APP_API_MODE } from "#/shared/config";
 import { AdminTopbar, Button, Toast } from "#/shared/ui";
 
 export function RestaurantListPage() {
 	const navigate = useNavigate();
-	const { logout } = useAuth();
+	const { isAuthenticated, session, logout } = useAuth();
 
 	const {
 		applySearch,
-		categoryNameById,
 		errorMessage,
 		handleImageError,
 		handleLargeCategoryChange,
@@ -36,6 +35,11 @@ export function RestaurantListPage() {
 		toastMessage,
 	} = useRestaurantListPage();
 
+	const accessToken = session?.tokenBundle?.accessToken?.trim();
+	const isMockSession = Boolean(accessToken?.startsWith("mock-"));
+	const showApiMode = isAuthenticated && getAdminServiceMode() === "mock";
+	const shouldShowMockMode = showApiMode && isMockSession;
+
 	const handleLogout = async () => {
 		await logout();
 		navigate("/login", { replace: true });
@@ -46,7 +50,7 @@ export function RestaurantListPage() {
 			<AdminTopbar
 				eyebrow="관리자 페이지"
 				title="맛집 관리"
-				subtitle={`API Mode: ${APP_API_MODE.toUpperCase()}`}
+				subtitle={shouldShowMockMode ? "API Mode: MOCK" : undefined}
 				actionsClassName="admin-topbar__actions--list"
 				actions={
 					<>
@@ -83,7 +87,6 @@ export function RestaurantListPage() {
 				/>
 
 				<RestaurantListContent
-					categoryNameById={categoryNameById}
 					errorMessage={errorMessage}
 					handleImageError={handleImageError}
 					imageErrorById={imageErrorById}

@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
-	type CategoryOption,
 	type PageResponse,
 	type RestaurantListItem,
 	type RestaurantListQuery,
 } from "#/apis/restaurants";
 import {
-	useGetCategories,
 	useGetRestaurants,
 	useSyncAllRestaurants,
 } from "#/hooks";
@@ -15,12 +13,11 @@ import {
 	ALL_FILTER_VALUE,
 	LARGE_CATEGORY_CODES,
 	REGION_CODES,
-	toLargeCategoryLabel,
 } from "#/shared/constants/DomainLabels";
 import { useAutoDismissToast } from "#/shared/hooks";
 import { getErrorMessage } from "#/shared/utils";
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 8;
 const DEFAULT_REGION_OPTIONS = [ALL_FILTER_VALUE, ...REGION_CODES];
 const DEFAULT_LARGE_CATEGORY_OPTIONS = [
 	ALL_FILTER_VALUE,
@@ -36,17 +33,6 @@ const DEFAULT_PAGE: PageResponse<RestaurantListItem> = {
 	hasNext: false,
 };
 
-const getCategoryLabel = (category: CategoryOption): string => {
-	const large = category.largeCategory?.trim();
-	const medium = category.mediumCategory?.trim() ?? category.name;
-
-	if (large && medium) {
-		return `${toLargeCategoryLabel(large)} · ${medium}`;
-	}
-
-	return medium;
-};
-
 export function useRestaurantListPage() {
 	const [keywordInput, setKeywordInput] = useState("");
 	const [toastMessage, setToastMessage] = useState("");
@@ -58,7 +44,6 @@ export function useRestaurantListPage() {
 		size: PAGE_SIZE,
 	});
 
-	const { data: categories = [] } = useGetCategories();
 	const {
 		data: pageResponse = DEFAULT_PAGE,
 		error: restaurantListError,
@@ -77,13 +62,6 @@ export function useRestaurantListPage() {
 	const clearToastMessage = useCallback(() => {
 		setToastMessage("");
 	}, []);
-
-	const categoryNameById = useMemo(() => {
-		return categories.reduce<Record<number, string>>((acc, category) => {
-			acc[category.id] = getCategoryLabel(category);
-			return acc;
-		}, {});
-	}, [categories]);
 
 	const regionOptions = useMemo(() => {
 		const optionSet = new Set<string>(DEFAULT_REGION_OPTIONS);
@@ -104,14 +82,8 @@ export function useRestaurantListPage() {
 		if (query.largeCategory) {
 			optionSet.add(query.largeCategory);
 		}
-		categories.forEach((category) => {
-			if (category.largeCategory) {
-				optionSet.add(category.largeCategory);
-			}
-		});
-
 		return Array.from(optionSet);
-	}, [categories, query.largeCategory]);
+	}, [query.largeCategory]);
 
 	useEffect(() => {
 		setImageErrorById({});
@@ -169,7 +141,9 @@ export function useRestaurantListPage() {
 	const handleSyncAll = useCallback(async () => {
 		try {
 			const result = await syncAllMutation.mutateAsync();
-			setToastMessage(result.message ?? "전체 동기화가 완료되었습니다.");
+			setToastMessage(
+				`전체 동기화 작업이 생성되었습니다. (job #${result.jobId})`,
+			);
 		} catch (error) {
 			setToastMessage(
 				getErrorMessage(error, "전체 동기화 중 오류가 발생했습니다."),
@@ -190,7 +164,6 @@ export function useRestaurantListPage() {
 	}, []);
 
 	return {
-		categoryNameById,
 		errorMessage,
 		handleImageError,
 		handleLargeCategoryChange,

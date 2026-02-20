@@ -8,12 +8,14 @@ import React, {
 	useState,
 } from "react";
 
+import { setAdminServiceMode } from "#/apis/admin";
 import {
 	login as loginApi,
 	logout as logoutApi,
 	type AdminSession,
 	type LoginRequest,
 } from "#/apis/auth";
+import { APP_ENV } from "#/shared/config/env";
 
 const ACCESS_TOKEN_KEY = "admin_access_token";
 const REFRESH_TOKEN_KEY = "admin_refresh_token";
@@ -52,6 +54,15 @@ const isValidSession = (session: AdminSession): boolean => {
 	}
 
 	return true;
+};
+
+const inferAdminServiceMode = (session: AdminSession | null): "mock" | "real" => {
+	const accessToken = session?.tokenBundle?.accessToken?.trim();
+	if (!accessToken) {
+		return APP_ENV.USE_MOCK_API ? "mock" : "real";
+	}
+
+	return accessToken.startsWith("mock-") ? "mock" : "real";
 };
 
 const readStoredSession = (): AdminSession | null => {
@@ -108,6 +119,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
 	const [session, setSession] = useState<AdminSession | null>(() =>
 		readStoredSession(),
 	);
+
+	useEffect(() => {
+		setAdminServiceMode(inferAdminServiceMode(session));
+	}, [session]);
 
 	useEffect(() => {
 		if (!isBrowser()) {

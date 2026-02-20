@@ -3,6 +3,7 @@ import React from "react";
 import type { RestaurantListItem } from "#/apis/restaurants";
 import { RestaurantThumbnail } from "#/pageComponents/restaurants/list/components/RestaurantThumbnail";
 import { toRegionLabel } from "#/shared/constants/DomainLabels";
+import { toLargeCategoryLabel } from "#/shared/constants/DomainLabels";
 import { Button } from "#/shared/ui";
 
 const formatDateTime = (value: string) =>
@@ -14,8 +15,26 @@ const formatDateTime = (value: string) =>
 		hour12: false,
 	}).format(new Date(value));
 
+const getCategoryLabel = (
+	largeCategory?: string | null,
+	mediumCategory?: string | null,
+	categoryId?: number | null,
+): string => {
+	if (largeCategory?.trim() && mediumCategory?.trim()) {
+		return `${toLargeCategoryLabel(
+			largeCategory.trim(),
+		)} / ${mediumCategory.trim()}`;
+	}
+	if (mediumCategory?.trim()) {
+		return mediumCategory.trim();
+	}
+	if (largeCategory?.trim()) {
+		return toLargeCategoryLabel(largeCategory.trim());
+	}
+	return categoryId === null || categoryId === undefined ? "-" : String(categoryId);
+};
+
 type RestaurantListContentProps = {
-	categoryNameById: Record<number, string>;
 	errorMessage: string;
 	handleImageError: (restaurantId: number) => void;
 	imageErrorById: Record<number, true>;
@@ -25,7 +44,6 @@ type RestaurantListContentProps = {
 };
 
 export function RestaurantListContent({
-	categoryNameById,
 	errorMessage,
 	handleImageError,
 	imageErrorById,
@@ -98,11 +116,11 @@ export function RestaurantListContent({
 									</td>
 									<td>{restaurant.name}</td>
 									<td>
-										{restaurant.categoryId
-											? (categoryNameById[
-													restaurant.categoryId
-												] ?? restaurant.categoryId)
-											: "-"}
+										{getCategoryLabel(
+											restaurant.largeCategory,
+											restaurant.mediumCategory,
+											restaurant.categoryId,
+										)}
 									</td>
 									<td>
 										{restaurant.rating
@@ -181,11 +199,11 @@ export function RestaurantListContent({
 							<div className="admin-restaurant-card__meta">
 								<span>
 									카테고리:{" "}
-									{restaurant.categoryId
-										? (categoryNameById[
-												restaurant.categoryId
-											] ?? restaurant.categoryId)
-										: "-"}
+									{getCategoryLabel(
+										restaurant.largeCategory,
+										restaurant.mediumCategory,
+										restaurant.categoryId,
+									)}
 								</span>
 								<span>
 									평점:{" "}

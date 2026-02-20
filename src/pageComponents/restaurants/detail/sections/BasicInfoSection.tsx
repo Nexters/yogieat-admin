@@ -35,6 +35,7 @@ type BasicInfoSectionProps = {
 	restaurant: RestaurantDetail;
 	selectedCategory?: CategoryOption;
 	selectedCategoryInDraft?: CategoryOption;
+	selectedCategoryLabel?: string;
 	toCategoryLabel: (category: CategoryOption) => string;
 };
 
@@ -54,6 +55,7 @@ export function BasicInfoSection({
 	restaurant,
 	selectedCategory,
 	selectedCategoryInDraft,
+	selectedCategoryLabel,
 	toCategoryLabel,
 }: BasicInfoSectionProps) {
 	return (
@@ -94,7 +96,11 @@ export function BasicInfoSection({
 						<div className="admin-readonly">
 							{selectedCategory
 								? toCategoryLabel(selectedCategory)
-								: (restaurant.categoryId ?? "-")}
+								: selectedCategoryLabel ??
+									(restaurant.categoryId === null ||
+									restaurant.categoryId === undefined
+										? "-"
+										: restaurant.categoryId)}
 						</div>
 					)}
 				</DetailField>

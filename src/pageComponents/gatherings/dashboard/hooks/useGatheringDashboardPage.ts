@@ -11,6 +11,8 @@ import type {
 import {
 	toRegionLabel,
 	toTimeSlotLabel,
+	toDistanceRangeLabel,
+	toLargeCategoryLabel,
 } from "#/shared/constants/DomainLabels";
 import { useAutoDismissToast } from "#/shared/hooks";
 import { getErrorMessage } from "#/shared/utils";
@@ -163,17 +165,24 @@ export function useGatheringDashboardPage() {
 		);
 		const distanceCounts = toCountEntries(
 			dashboardData.participants.map(
-				(participant) => participant.distanceRange,
+				(participant) => toDistanceRangeLabel(participant.distanceRange),
 			),
 		);
 		const preferenceCounts = toCountEntries(
 			dashboardData.participants.flatMap(
-				(participant) => participant.preferences,
+				(participant) =>
+					(participant.preferences ?? []).map((preference) =>
+						toLargeCategoryLabel(preference),
+					),
 			),
 		);
 		const dislikeCounts = toCountEntries(
-			dashboardData.participants.map(
-				(participant) => participant.dislikes,
+			dashboardData.participants.flatMap((participant) =>
+				(participant.dislikes ?? "")
+					.split(",")
+					.map((dislike) => dislike.trim())
+					.filter(Boolean)
+					.map((dislike) => toLargeCategoryLabel(dislike)),
 			),
 		);
 

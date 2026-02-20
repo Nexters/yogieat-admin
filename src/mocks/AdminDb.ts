@@ -14,7 +14,8 @@ import {
 	RestaurantListItem,
 	RestaurantListQuery,
 	RestaurantPatchRequest,
-	SyncResult,
+	CreateRestaurantSyncJobResponse,
+	GetRestaurantSyncJobResponse,
 } from "#/apis/admin/types";
 import { REGION_CODES } from "#/shared/constants";
 
@@ -533,6 +534,8 @@ type AdminMockState = {
 	gatherings: GatheringItem[];
 	participants: ParticipantItem[];
 	restaurants: RestaurantDetail[];
+	syncJobs: GetRestaurantSyncJobResponse[];
+	nextSyncJobId: number;
 };
 
 const createInitialState = (): AdminMockState => ({
@@ -540,6 +543,8 @@ const createInitialState = (): AdminMockState => ({
 	gatherings: clone(GATHERING_SEED),
 	participants: clone(PARTICIPANT_SEED),
 	restaurants: clone(RESTAURANT_SEED),
+	syncJobs: [],
+	nextSyncJobId: 1_000_000,
 });
 
 let state = createInitialState();
@@ -642,6 +647,37 @@ const paginate = <T>(
 		totalPages,
 		hasNext: safePage < totalPages - 1,
 	};
+};
+
+const createRestaurantSyncJob = (
+	scope: GetRestaurantSyncJobResponse["scope"],
+	targetRestaurantId: number | null,
+	totalCount: number,
+): GetRestaurantSyncJobResponse => {
+	const now = nowIso();
+	return {
+		jobId: state.nextSyncJobId++,
+		scope,
+		triggerType: "MANUAL",
+		status: "COMPLETED",
+		targetRestaurantId,
+		chunkSize: 100,
+		parallelism: 1,
+		totalCount,
+		processedCount: totalCount,
+		successCount: totalCount,
+		failedCount: 0,
+		errorSummary: null,
+		startedAt: now,
+		finishedAt: now,
+		createdAt: now,
+		updatedAt: now,
+	};
+};
+
+const persistSyncJob = (job: GetRestaurantSyncJobResponse): GetRestaurantSyncJobResponse => {
+	state.syncJobs = [job, ...state.syncJobs];
+	return clone(job);
 };
 
 const updateRestaurantFields = (
@@ -997,7 +1033,7 @@ export const adminMockDb = {
 		return clone(updated);
 	},
 
-	syncRestaurant(id: number): SyncResult {
+	syncRestaurant(id: number): CreateRestaurantSyncJobResponse {
 		const targetIndex = state.restaurants.findIndex(
 			(restaurant) => restaurant.id === id,
 		);
@@ -1012,32 +1048,30 @@ export const adminMockDb = {
 			updatedAt: nowIso(),
 		};
 
-		const startedAt = nowIso();
-
-		return {
-			jobId: `sync-${id}-${Date.now()}`,
-			status: "COMPLETED",
-			startedAt,
-			finishedAt: nowIso(),
-			message: `맛집 #${id} 동기화가 완료되었습니다.`,
-		};
+		const created = createRestaurantSyncJob("SINGLE", id, 1);
+		return persistSyncJob(created);
 	},
 
-	syncAllRestaurants(): SyncResult {
-		const startedAt = nowIso();
-
+	syncAllRestaurants(): CreateRestaurantSyncJobResponse {
 		state.restaurants = state.restaurants.map((restaurant) => ({
 			...restaurant,
 			updatedAt: nowIso(),
 		}));
+		const created = createRestaurantSyncJob(
+			"ALL",
+			null,
+			state.restaurants.length,
+		);
+		return persistSyncJob(created);
+	},
 
-		return {
-			jobId: `sync-all-${Date.now()}`,
-			status: "COMPLETED",
-			startedAt,
-			finishedAt: nowIso(),
-			message: `전체 ${state.restaurants.length}건 동기화가 완료되었습니다.`,
-		};
+	getSyncRestaurantJob(jobId: number): GetRestaurantSyncJobResponse {
+		const found = state.syncJobs.find((job) => job.jobId === jobId);
+		if (!found) {
+			throw new Error("해당 동기화 Job을 찾을 수 없습니다.");
+		}
+
+		return clone(found);
 	},
 };
 

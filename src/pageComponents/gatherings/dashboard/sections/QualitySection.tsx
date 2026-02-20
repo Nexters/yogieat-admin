@@ -2,6 +2,7 @@ import React from "react";
 
 import type { DataIssue } from "#/apis/gatherings";
 import { toIssueClassName } from "#/pageComponents/gatherings/dashboard/constants";
+import { toIssueSeverityLabel } from "#/shared/constants/DomainLabels";
 
 type QualitySectionProps = {
 	issues: DataIssue[];
@@ -16,7 +17,7 @@ export function QualitySection({ issues, sectionRef }: QualitySectionProps) {
 				{issues.map((issue) => (
 					<li key={issue.id} className="admin-issue-item">
 						<div className={toIssueClassName(issue.severity)}>
-							{issue.severity}
+							{toIssueSeverityLabel(issue.severity)}
 						</div>
 						<div className="admin-issue-item__content">
 							<p>{issue.title}</p>

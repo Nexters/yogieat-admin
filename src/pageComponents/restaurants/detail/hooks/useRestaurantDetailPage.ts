@@ -11,6 +11,7 @@ import {
 	getCategoryLabel,
 	REGION_OPTIONS,
 } from "#/pageComponents/restaurants/detail/constants";
+import { toLargeCategoryLabel } from "#/shared/constants/DomainLabels";
 import type {
 	CategoryGroup,
 	DraftChangeHandler,
@@ -32,7 +33,8 @@ export function useRestaurantDetailPage({
 	hasValidId,
 	restaurantId,
 }: UseRestaurantDetailPageParams) {
-	const { data: categories = [] } = useGetCategories();
+	const [isEditMode, setIsEditMode] = useState(false);
+	const { data: categories = [] } = useGetCategories(isEditMode);
 	const {
 		data: restaurantQueryData,
 		error: restaurantQueryError,
@@ -47,7 +49,6 @@ export function useRestaurantDetailPage({
 
 	const [restaurant, setRestaurant] = useState<RestaurantDetail | null>(null);
 	const [draft, setDraft] = useState<EditableRestaurant | null>(null);
-	const [isEditMode, setIsEditMode] = useState(false);
 	const [errorMessage, setErrorMessage] = useState("");
 	const [toastMessage, setToastMessage] = useState("");
 	const [isDetailImageError, setIsDetailImageError] = useState(false);
@@ -84,6 +85,29 @@ export function useRestaurantDetailPage({
 			(category) => category.id === restaurant.categoryId,
 		);
 	}, [categories, restaurant]);
+
+	const selectedCategoryLabel = useMemo(() => {
+		if (!restaurant) {
+			return undefined;
+		}
+
+		const largeCategory = restaurant.largeCategory?.trim();
+		const mediumCategory = restaurant.mediumCategory?.trim();
+
+		if (largeCategory && mediumCategory) {
+			return `${toLargeCategoryLabel(largeCategory)} / ${mediumCategory}`;
+		}
+		if (mediumCategory) {
+			return mediumCategory;
+		}
+		if (largeCategory) {
+			return toLargeCategoryLabel(largeCategory);
+		}
+
+		return restaurant.categoryId === null || restaurant.categoryId === undefined
+			? "-"
+			: String(restaurant.categoryId);
+	}, [restaurant]);
 
 	const categoryGroups = useMemo<CategoryGroup[]>(() => {
 		const grouped = new Map<string, CategoryOption[]>();
@@ -277,7 +301,9 @@ export function useRestaurantDetailPage({
 		try {
 			const result =
 				await syncRestaurantMutation.mutateAsync(restaurantId);
-			setToastMessage(result.message ?? "맛집 동기화가 완료되었습니다.");
+			setToastMessage(
+				`동기화 작업이 생성되었습니다. (job #${result.jobId})`,
+			);
 		} catch (error) {
 			setErrorMessage(
 				getErrorMessage(error, "동기화 중 오류가 발생했습니다."),
@@ -320,6 +346,7 @@ export function useRestaurantDetailPage({
 		restaurant,
 		selectedCategory,
 		selectedCategoryInDraft,
+		selectedCategoryLabel,
 		setActiveLargeCategory,
 		setCategoryId,
 		setCategoryKeyword,

@@ -12,7 +12,8 @@ import {
 	RestaurantListItem,
 	RestaurantListQuery,
 	RestaurantPatchRequest,
-	SyncResult,
+	CreateRestaurantSyncJobResponse,
+	GetRestaurantSyncJobResponse,
 	TokenBundle,
 } from "#/apis/admin/types";
 import { ApiError, requestJson } from "#/shared/config";
@@ -423,8 +424,11 @@ const normalizeCategories = (
 };
 
 const getByIdPath = (id: number) => toAdminPath(`restaurants/${id}`);
-const getSyncByIdPath = (id: number) => toAdminPath(`restaurants/${id}/sync`);
 const getGatheringByIdPath = (id: number) => toAdminPath(`gatherings/${id}`);
+const getRestaurantSyncJobPath = (jobId: number) =>
+	`restaurants/sync-jobs/${jobId}`;
+const getRestaurantSyncSinglePath = (restaurantId: number) =>
+	`restaurants/${restaurantId}/sync-jobs`;
 
 export const realAdminService: AdminService = {
 	async login(request: LoginRequest): Promise<AdminSession> {
@@ -532,9 +536,9 @@ export const realAdminService: AdminService = {
 		return response;
 	},
 
-	async syncRestaurant(id: number): Promise<SyncResult> {
-		const response = await requestWithAutoRefresh<SyncResult>(
-			getSyncByIdPath(id),
+	async syncRestaurant(id: number): Promise<CreateRestaurantSyncJobResponse> {
+		const response = await requestWithAutoRefresh<CreateRestaurantSyncJobResponse>(
+			getRestaurantSyncSinglePath(id),
 			{
 				method: "POST",
 			},
@@ -543,11 +547,24 @@ export const realAdminService: AdminService = {
 		return response;
 	},
 
-	async syncAllRestaurants(): Promise<SyncResult> {
-		const response = await requestWithAutoRefresh<SyncResult>(
-			toAdminPath("restaurants/sync"),
+	async syncAllRestaurants(): Promise<CreateRestaurantSyncJobResponse> {
+		const response = await requestWithAutoRefresh<CreateRestaurantSyncJobResponse>(
+			"restaurants/sync-jobs/all",
 			{
 				method: "POST",
+			},
+		);
+
+		return response;
+	},
+
+	async getSyncRestaurantJob(
+		jobId: number,
+	): Promise<GetRestaurantSyncJobResponse> {
+		const response = await requestWithAutoRefresh<GetRestaurantSyncJobResponse>(
+			getRestaurantSyncJobPath(jobId),
+			{
+				method: "GET",
 			},
 		);
 

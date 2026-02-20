@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import {
+	getSyncRestaurantJob,
 	getCategories,
 	getRestaurantById,
 	getRestaurants,
@@ -23,5 +24,10 @@ export const restaurantQueryOptions = {
 		queryOptions({
 			queryKey: restaurantKeys.detail(id),
 			queryFn: () => getRestaurantById(id),
+		}),
+	syncJob: (jobId: number) =>
+		queryOptions({
+			queryKey: restaurantKeys.syncJob(jobId),
+			queryFn: () => getSyncRestaurantJob(jobId),
 		}),
 };

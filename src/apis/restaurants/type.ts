@@ -1,6 +1,8 @@
 export type TimeSlot = "LUNCH" | "DINNER" | "BOTH";
 
-export type SyncStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+export type RestaurantSyncScope = "ALL" | "SINGLE" | (string & {});
+export type RestaurantSyncTriggerType = "MANUAL" | (string & {});
+export type RestaurantSyncJobStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
 
 export type GeoJsonPoint = {
 	coordinates: [number, number];
@@ -10,6 +12,8 @@ export type RestaurantListItem = {
 	id: number;
 	name: string;
 	categoryId: number | null;
+	largeCategory?: string | null;
+	mediumCategory?: string | null;
 	rating: number | null;
 	imageUrl?: string | null;
 	region: string;
@@ -20,6 +24,8 @@ export type RestaurantDetail = {
 	id: number;
 	externalId: string;
 	categoryId: number | null;
+	largeCategory?: string | null;
+	mediumCategory?: string | null;
 	name: string;
 	address: string;
 	rating: number | null;
@@ -63,13 +69,35 @@ export type CategoryOption = {
 	depth?: number;
 };
 
-export type SyncResult = {
-	jobId: string;
-	status: SyncStatus;
-	startedAt: string;
-	finishedAt?: string;
-	message?: string;
+export type CreateRestaurantSyncJobResponse = {
+	jobId: number;
+	scope: RestaurantSyncScope;
+	triggerType: RestaurantSyncTriggerType;
+	status: RestaurantSyncJobStatus;
+	targetRestaurantId: number | null;
+	createdAt: string;
 };
+
+export type GetRestaurantSyncJobResponse = {
+	jobId: number;
+	scope: RestaurantSyncScope;
+	triggerType: RestaurantSyncTriggerType;
+	status: RestaurantSyncJobStatus;
+	targetRestaurantId: number | null;
+	chunkSize: number;
+	parallelism: number;
+	totalCount: number;
+	processedCount: number;
+	successCount: number;
+	failedCount: number;
+	errorSummary: string | null;
+	startedAt: string | null;
+	finishedAt: string | null;
+	createdAt: string;
+	updatedAt: string;
+};
+
+export type SyncResult = GetRestaurantSyncJobResponse;
 
 export type PageResponse<T> = {
 	content: T[];

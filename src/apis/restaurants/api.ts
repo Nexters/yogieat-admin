@@ -6,7 +6,8 @@ import type {
 	RestaurantListItem,
 	RestaurantListQuery,
 	RestaurantPatchRequest,
-	SyncResult,
+	CreateRestaurantSyncJobResponse,
+	GetRestaurantSyncJobResponse,
 } from "#/apis/restaurants/type";
 
 export const getCategories = (): Promise<CategoryOption[]> => {
@@ -32,10 +33,18 @@ export const updateRestaurant = (
 	return adminService.updateRestaurant(id, patch);
 };
 
-export const syncRestaurant = (id: number): Promise<SyncResult> => {
+export const syncRestaurant = (
+	id: number,
+): Promise<CreateRestaurantSyncJobResponse> => {
 	return adminService.syncRestaurant(id);
 };
 
-export const syncAllRestaurants = (): Promise<SyncResult> => {
+export const syncAllRestaurants = (): Promise<CreateRestaurantSyncJobResponse> => {
 	return adminService.syncAllRestaurants();
+};
+
+export const getSyncRestaurantJob = (
+	jobId: number,
+): Promise<GetRestaurantSyncJobResponse> => {
+	return adminService.getSyncRestaurantJob(jobId);
 };

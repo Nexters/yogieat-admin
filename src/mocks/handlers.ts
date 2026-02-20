@@ -10,6 +10,7 @@ import { adminMockDb } from "#/mocks/AdminDb";
 import {
 	ADMIN_ERROR_CODE,
 	ApiErrorCode,
+	COMMON_ERROR_CODE,
 	GATHERING_ERROR_CODE,
 	RESTAURANT_ERROR_CODE,
 	TIME_SLOT_CODES,
@@ -360,6 +361,86 @@ export const handlers = [
 							error instanceof Error
 								? error.message
 								: "맛집 수정에 실패했습니다.",
+						),
+					),
+				);
+			}
+		},
+	),
+
+	rest.post(
+		"*/api/v1/restaurants/:restaurantId/sync-jobs",
+		async (request, response, ctx) => {
+			const restaurantId = parseResourceId(
+				request.params.restaurantId as string | undefined,
+			);
+
+			try {
+				const result = adminMockDb.syncRestaurant(restaurantId);
+				return response(
+					ctx.delay(320),
+					ctx.json(createSuccessResponse(result)),
+				);
+			} catch (error) {
+				return response(
+					ctx.delay(320),
+					ctx.status(404),
+					ctx.json(
+						createErrorResponse(
+							404,
+							RESTAURANT_ERROR_CODE.SYNC_FAILED,
+							error instanceof Error
+								? error.message
+								: "맛집 동기화에 실패했습니다.",
+						),
+					),
+				);
+			}
+		},
+	),
+
+	rest.post(
+		"*/api/v1/restaurants/sync-jobs/all",
+		async (_request, response, ctx) => {
+			const result = adminMockDb.syncAllRestaurants();
+			return response(ctx.delay(520), ctx.json(createSuccessResponse(result)));
+		},
+	),
+
+	rest.get(
+		"*/api/v1/restaurants/sync-jobs/:jobId",
+		async (request, response, ctx) => {
+			const jobId = parseResourceId(
+				request.params.jobId as string | undefined,
+			);
+			if (!Number.isFinite(jobId)) {
+				return response(
+					ctx.delay(180),
+					ctx.status(400),
+					ctx.json(
+						createErrorResponse(
+							400,
+							COMMON_ERROR_CODE.METHOD_ARGUMENT_TYPE_MISMATCH,
+							"동기화 Job ID 형식이 올바르지 않습니다.",
+						),
+					),
+				);
+			}
+
+			try {
+				const job = adminMockDb.getSyncRestaurantJob(jobId);
+				return response(ctx.delay(220), ctx.json(createSuccessResponse(job)));
+			} catch (error) {
+				return response(
+					ctx.delay(220),
+					ctx.status(404),
+					ctx.json(
+						createErrorResponse(
+							404,
+							RESTAURANT_ERROR_CODE.SYNC_JOB_NOT_FOUND,
+							error instanceof Error
+								? error.message
+								: "동기화 Job을 찾을 수 없습니다.",
 						),
 					),
 				);

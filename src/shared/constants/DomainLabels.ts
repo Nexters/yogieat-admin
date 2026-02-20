@@ -24,6 +24,23 @@ export const LARGE_CATEGORY_LABEL_BY_CODE = {
 	ANY: "상관없음",
 } as const;
 
+export const DISTANCE_RANGE_LABEL_BY_CODE = {
+	RANGE_500M: "500m",
+	RANGE_1KM: "1km",
+	ANY: "상관없음",
+} as const;
+
+export const PARTICIPANT_ROLE_LABEL_BY_CODE = {
+	HOST: "주최자",
+	MEMBER: "참여자",
+} as const;
+
+export const DATA_ISSUE_SEVERITY_LABEL_BY_CODE = {
+	INFO: "안내",
+	WARN: "주의",
+	ERROR: "오류",
+} as const;
+
 export type LargeCategoryCode = keyof typeof LARGE_CATEGORY_LABEL_BY_CODE;
 
 export const LARGE_CATEGORY_CODES = Object.keys(
@@ -64,6 +81,30 @@ export const toTimeSlotLabel = (value?: string | null): string => {
 	}
 
 	return TIME_SLOT_LABEL_BY_CODE[value as TimeSlotCode] ?? value;
+};
+
+export const toDistanceRangeLabel = (value?: string | null): string => {
+	if (!value) {
+		return "-";
+	}
+
+	return DISTANCE_RANGE_LABEL_BY_CODE[value as keyof typeof DISTANCE_RANGE_LABEL_BY_CODE] ?? value;
+};
+
+export const toParticipantRoleLabel = (value?: string | null): string => {
+	if (!value) {
+		return "-";
+	}
+
+	return PARTICIPANT_ROLE_LABEL_BY_CODE[value as keyof typeof PARTICIPANT_ROLE_LABEL_BY_CODE] ?? value;
+};
+
+export const toIssueSeverityLabel = (value?: string | null): string => {
+	if (!value) {
+		return "-";
+	}
+
+	return DATA_ISSUE_SEVERITY_LABEL_BY_CODE[value as keyof typeof DATA_ISSUE_SEVERITY_LABEL_BY_CODE] ?? value;
 };
 
 export const toRegionFilterLabel = (value: string): string => {

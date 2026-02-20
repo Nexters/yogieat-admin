@@ -28,14 +28,19 @@ export const RESTAURANT_ENDPOINT_CONTRACTS = {
 		request: "RestaurantPatchRequest",
 		response: "RestaurantDetail",
 	},
+	getSyncRestaurantJob: {
+		method: "GET",
+		path: "/restaurants/sync-jobs/:jobId",
+		response: "GetRestaurantSyncJobResponse",
+	},
 	syncRestaurant: {
 		method: "POST",
-		path: "/restaurants/:id/sync",
-		response: "SyncResult",
+		path: "/restaurants/:id/sync-jobs",
+		response: "CreateRestaurantSyncJobResponse",
 	},
 	syncAllRestaurants: {
 		method: "POST",
-		path: "/restaurants/sync",
-		response: "SyncResult",
+		path: "/restaurants/sync-jobs/all",
+		response: "CreateRestaurantSyncJobResponse",
 	},
 } as const;
