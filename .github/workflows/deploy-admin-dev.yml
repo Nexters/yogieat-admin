@@ -62,6 +62,14 @@ jobs:
             - name: Prepare deploy artifacts
               run: mv /tmp/deploy-source.tgz scripts/deploy/deploy-source.tgz
 
+            - name: Prepare remote deploy directory
+              uses: appleboy/ssh-action@v1.0.0
+              with:
+                  host: ${{ secrets.SERVER_HOST }}
+                  username: ${{ secrets.SERVER_USERNAME }}
+                  key: ${{ secrets.SERVER_PRIVATE_KEY }}
+                  script: mkdir -p /tmp/yogieat-admin/deploy
+
             - name: Copy deploy script to Server
               uses: burnett01/rsync-deployments@7.0.1
               with:
@@ -70,7 +78,7 @@ jobs:
                   remote_user: ${{ secrets.SERVER_USERNAME }}
                   remote_key: ${{ secrets.SERVER_PRIVATE_KEY }}
                   path: ./scripts/deploy/
-                  remote_path: /home/ubuntu/scripts/deploy/
+                  remote_path: /tmp/yogieat-admin/deploy/
 
             - name: Deploy atomically
               uses: appleboy/ssh-action@v1.0.0
@@ -79,7 +87,7 @@ jobs:
                   username: ${{ secrets.SERVER_USERNAME }}
                   key: ${{ secrets.SERVER_PRIVATE_KEY }}
                   script: |
-                      mv /home/ubuntu/scripts/deploy/deploy-source.tgz /tmp/yogieat-admin-source.tgz
+                      mv /tmp/yogieat-admin/deploy/deploy-source.tgz /tmp/yogieat-admin-source.tgz
                       DOCKERHUB_NAMESPACE="${{ secrets.DOCKERHUB_USERNAME }}" /usr/local/bin/deploy-yogieat-admin.sh dev ${{ steps.meta.outputs.short_sha }} develop
 
             - name: Discord notification
