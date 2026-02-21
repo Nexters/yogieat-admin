@@ -146,13 +146,18 @@ export const handlers = [
 			}
 
 			const seed = Date.now();
+			const accessTokenExpiresIn = 1000 * 60 * 60;
+			const refreshTokenExpiresIn = 7 * 24 * 60 * 60 * 1000;
+
 			return response(
 				ctx.delay(DEFAULT_DELAY_MS),
 				ctx.json(
 					createSuccessResponse({
 						accessToken: `mock-access-${seed}`,
 						refreshToken: `mock-refresh-${seed}`,
-						expiresAt: new Date(seed + 1000 * 60 * 60).toISOString(),
+						tokenType: "Bearer",
+						accessTokenExpiresIn,
+						refreshTokenExpiresIn,
 					}),
 				),
 			);

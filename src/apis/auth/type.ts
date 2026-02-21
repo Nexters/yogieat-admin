@@ -22,3 +22,11 @@ export type LoginRequest = {
 export type RefreshTokenRequest = {
 	refreshToken: string;
 };
+
+export type RefreshTokenResponse = {
+	accessToken: string;
+	refreshToken: string;
+	tokenType: string;
+	accessTokenExpiresIn: number;
+	refreshTokenExpiresIn: number;
+};
