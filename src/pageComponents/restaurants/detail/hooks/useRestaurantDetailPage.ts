@@ -11,7 +11,6 @@ import {
 	getCategoryLabel,
 	REGION_OPTIONS,
 } from "#/pageComponents/restaurants/detail/constants";
-import { toLargeCategoryLabel } from "#/shared/constants/DomainLabels";
 import type {
 	CategoryGroup,
 	DraftChangeHandler,
@@ -21,6 +20,7 @@ import {
 	toEditableRestaurant,
 	toRestaurantPatchRequest,
 } from "#/pageComponents/restaurants/detail/types";
+import { toLargeCategoryLabel } from "#/shared/constants/DomainLabels";
 import { useAutoDismissToast } from "#/shared/hooks";
 import { getErrorMessage } from "#/shared/utils";
 
