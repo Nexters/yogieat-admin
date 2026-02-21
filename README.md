@@ -23,8 +23,8 @@ pnpm start
   내부 API base를 `${REACT_APP_API_URL}/api/v1`로 조합합니다.
 - Admin API prefix는 `REACT_APP_ADMIN_API_PREFIX`로 제어하며 기본값은 `/api/v1/admin`입니다.
 - Admin API는 `mock`/`real` 모드 전환이 가능합니다.
-  - `REACT_APP_USE_MOCK_API=true`: 프론트 로컬 목 서비스 사용(네트워크 API 호출 없음, 기본값)
-  - `REACT_APP_USE_MOCK_API=false`: 실제 백엔드 API 호출
+    - `REACT_APP_USE_MOCK_API=true`: 프론트 로컬 목 서비스 사용(네트워크 API 호출 없음, 기본값)
+    - `REACT_APP_USE_MOCK_API=false`: 실제 백엔드 API 호출
 
 ### Local setup
 
@@ -48,6 +48,7 @@ REACT_APP_USE_MOCK_API=false
 ```
 
 주의:
+
 - CRA 환경 변수는 **빌드 타임 주입**이므로 런타임에 변경되지 않습니다.
 - 환경 값 변경 후에는 재빌드가 필요합니다.
 
@@ -117,15 +118,15 @@ packages/
 
 - `http://localhost:3845/assets/...` URL은 Figma Desktop MCP 로컬 세션 전용이므로 배포 환경에서 동작하지 않습니다.
 - 프로덕션에서는 반드시 다음 중 하나로 사용하세요.
-  - `public/` 정적 파일 경로 (예: `/images/...`, `/assets/...`)
-  - 코드 내 SVG(컴포넌트/inline)
-  - CDN URL
+    - `public/` 정적 파일 경로 (예: `/images/...`, `/assets/...`)
+    - 코드 내 SVG(컴포넌트/inline)
+    - CDN URL
 - 현재 코드베이스는 `localhost:3845` 참조를 제거했고, 배포 가능한 정적 경로로 변환되어 있습니다.
 
 ## Architecture Reference
 
 - `yogieat` 분석 및 admin 적용 가이드:
-  - `docs/yogieat-architecture-reference.md`
+    - `docs/yogieat-architecture-reference.md`
 
 ## Figma MCP (OAuth, Remote)
 
@@ -182,15 +183,16 @@ codex mcp get figma-desktop --json
 
 ```json
 {
-  "mcpServers": {
-    "Figma Desktop": {
-      "url": "http://127.0.0.1:3845/mcp"
-    }
-  }
+	"mcpServers": {
+		"Figma Desktop": {
+			"url": "http://127.0.0.1:3845/mcp"
+		}
+	}
 }
 ```
 
 주의:
+
 - 에디터 문서에서 SSE(Server-Sent Events) 또는 Streamable HTTP MCP를 지원하는지 먼저 확인하세요.
 - 에디터별로 transport 이름이 `sse` 또는 `streamable_http`로 다를 수 있습니다.
 
@@ -201,3 +203,16 @@ codex mcp get figma-desktop --json
 - Figma `unauthorized`/`forbidden`: Figma 로그인 계정 권한과 파일 공유 권한을 확인하고 `codex mcp login figma --scopes file_content`를 다시 실행하세요.
 - OAuth 브라우저 콜백 실패: 브라우저 팝업 차단 해제 후 재시도하거나 다른 기본 브라우저로 시도하세요.
 - `curl http://127.0.0.1:3845/mcp` 연결 실패: Figma Desktop 재시작, Dev Mode MCP 옵션 활성화, 포트 사용 여부(`lsof -i :3845`)를 확인하세요.
+
+## Deployment (Ubuntu + Two Domains)
+
+- 실행 가이드는 [`docs/gabia-ubuntu-static-deploy.md`](docs/gabia-ubuntu-static-deploy.md) 참고
+- 도커 compose 파일:
+    - [`docker/docker-compose.yml`](docker/docker-compose.yml)
+    - [`docker/docker-compose.dev.yml`](docker/docker-compose.dev.yml)
+    - [`docker/docker-compose.main.yml`](docker/docker-compose.main.yml)
+- GitHub Actions:
+    - [`.github/workflows/deploy-admin-dev.yml`](.github/workflows/deploy-admin-dev.yml)
+    - [`.github/workflows/deploy-admin-production.yml`](.github/workflows/deploy-admin-production.yml)
+- 서버 배포 스크립트 템플릿: [`scripts/deploy/deploy-yogieat-admin.sh`](scripts/deploy/deploy-yogieat-admin.sh)
+- 브랜치 전략: `develop` → `dist/dev-admin` 배포, `main` → `dist/admin` 배포
