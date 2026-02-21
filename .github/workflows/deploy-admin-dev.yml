@@ -3,7 +3,7 @@ name: Deploy Yogieat Admin (develop)
 on:
     push:
         branches:
-            - chore/deploy
+            - develop
 
 jobs:
     build_and_deploy_dev:
