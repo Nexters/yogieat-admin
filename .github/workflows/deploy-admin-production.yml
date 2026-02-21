@@ -8,6 +8,7 @@ on:
 jobs:
     build_and_deploy_main:
         runs-on: ubuntu-latest
+        environment: PROD
         concurrency:
             group: yogieat-admin-deploy
             cancel-in-progress: false
