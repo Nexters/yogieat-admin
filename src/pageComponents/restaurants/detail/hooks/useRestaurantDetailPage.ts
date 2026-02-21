@@ -5,6 +5,7 @@ import {
 	useGetCategories,
 	useGetRestaurantById,
 	useSyncRestaurant,
+	useDeleteRestaurant,
 	useUpdateRestaurant,
 } from "#/hooks";
 import {
@@ -20,21 +21,57 @@ import {
 	toEditableRestaurant,
 	toRestaurantPatchRequest,
 } from "#/pageComponents/restaurants/detail/types";
-import { toLargeCategoryLabel } from "#/shared/constants/DomainLabels";
 import { useAutoDismissToast } from "#/shared/hooks";
 import { getErrorMessage } from "#/shared/utils";
 
 type UseRestaurantDetailPageParams = {
 	hasValidId: boolean;
 	restaurantId: number;
+	onRestaurantDeleted?: () => void;
+};
+
+const toCategoryDisplayLabel = (category: CategoryOption | undefined) => {
+	if (!category) {
+		return undefined;
+	}
+
+	const largeCategory = category.largeCategory?.trim();
+	const mediumCategory = (category.mediumCategory ?? category.name ?? "").trim();
+
+	if (largeCategory && mediumCategory) {
+		return `${largeCategory} / ${mediumCategory}`;
+	}
+
+	if (largeCategory) {
+		return largeCategory;
+	}
+
+	return mediumCategory || undefined;
+};
+
+const toCategoryId = (
+	categoryId: CategoryOption["id"] | string | null | undefined,
+) => {
+	if (typeof categoryId === "number" && Number.isFinite(categoryId)) {
+		return Number.isInteger(categoryId) ? categoryId : undefined;
+	}
+
+	const categoryIdText = String(categoryId ?? "").trim();
+	if (!categoryIdText) {
+		return undefined;
+	}
+
+	const parsed = Number(categoryIdText);
+	return Number.isInteger(parsed) ? parsed : undefined;
 };
 
 export function useRestaurantDetailPage({
 	hasValidId,
 	restaurantId,
+	onRestaurantDeleted,
 }: UseRestaurantDetailPageParams) {
 	const [isEditMode, setIsEditMode] = useState(false);
-	const { data: categories = [] } = useGetCategories(isEditMode);
+	const { data: categories = [] } = useGetCategories();
 	const {
 		data: restaurantQueryData,
 		error: restaurantQueryError,
@@ -43,9 +80,11 @@ export function useRestaurantDetailPage({
 
 	const updateRestaurantMutation = useUpdateRestaurant();
 	const syncRestaurantMutation = useSyncRestaurant();
+	const deleteRestaurantMutation = useDeleteRestaurant();
 
 	const isSaving = updateRestaurantMutation.isPending;
 	const isSyncing = syncRestaurantMutation.isPending;
+	const isDeleting = deleteRestaurantMutation.isPending;
 
 	const [restaurant, setRestaurant] = useState<RestaurantDetail | null>(null);
 	const [draft, setDraft] = useState<EditableRestaurant | null>(null);
@@ -62,6 +101,14 @@ export function useRestaurantDetailPage({
 			)
 		: "";
 
+	const categoryMapById = useMemo(() => {
+		const map = new Map<number, CategoryOption>();
+		categories.forEach((category) => {
+			map.set(category.id, category);
+		});
+		return map;
+	}, [categories]);
+
 	const clearToastMessage = useCallback(() => {
 		setToastMessage("");
 	}, []);
@@ -70,44 +117,82 @@ export function useRestaurantDetailPage({
 		if (!draft) {
 			return undefined;
 		}
+		const draftCategoryId = toCategoryId(draft.categoryId);
+		if (draftCategoryId === undefined) {
+			return undefined;
+		}
 
-		return categories.find(
-			(category) => String(category.id) === draft.categoryId,
-		);
-	}, [categories, draft]);
+		return categoryMapById.get(draftCategoryId);
+	}, [categoryMapById, draft]);
 
 	const selectedCategory = useMemo(() => {
 		if (!restaurant) {
 			return undefined;
 		}
 
-		return categories.find(
-			(category) => category.id === restaurant.categoryId,
-		);
-	}, [categories, restaurant]);
+		const categoryId = toCategoryId(restaurant.categoryId);
+		if (categoryId !== undefined) {
+			const categoryFromId = categoryMapById.get(categoryId);
+			if (categoryFromId) {
+				return categoryFromId;
+			}
+		}
+
+		const largeCategory = restaurant.largeCategory?.trim();
+		const mediumCategory = restaurant.mediumCategory?.trim() ?? "";
+
+		if (largeCategory && mediumCategory) {
+			const exactMatched = categories.find(
+				(category) =>
+					(category.largeCategory?.trim() ?? "") === largeCategory &&
+					(category.mediumCategory ?? category.name ?? "").trim() ===
+						mediumCategory,
+			);
+			if (exactMatched) {
+				return exactMatched;
+			}
+		}
+
+		if (largeCategory) {
+			return categories.find(
+				(category) => category.largeCategory?.trim() === largeCategory,
+			);
+		}
+
+		if (mediumCategory) {
+			return categories.find(
+				(category) => (category.mediumCategory ?? category.name).trim() === mediumCategory,
+			);
+		}
+
+		return undefined;
+	}, [categoryMapById, categories, restaurant]);
 
 	const selectedCategoryLabel = useMemo(() => {
 		if (!restaurant) {
 			return undefined;
 		}
 
+		const categoryLabel = toCategoryDisplayLabel(selectedCategory);
+		if (categoryLabel) {
+			return categoryLabel;
+		}
+
 		const largeCategory = restaurant.largeCategory?.trim();
 		const mediumCategory = restaurant.mediumCategory?.trim();
 
 		if (largeCategory && mediumCategory) {
-			return `${toLargeCategoryLabel(largeCategory)} / ${mediumCategory}`;
+			return `${largeCategory} / ${mediumCategory}`;
 		}
 		if (mediumCategory) {
 			return mediumCategory;
 		}
 		if (largeCategory) {
-			return toLargeCategoryLabel(largeCategory);
+			return largeCategory;
 		}
 
-		return restaurant.categoryId === null || restaurant.categoryId === undefined
-			? "-"
-			: String(restaurant.categoryId);
-	}, [restaurant]);
+		return "-";
+	}, [restaurant, selectedCategory]);
 
 	const categoryGroups = useMemo<CategoryGroup[]>(() => {
 		const grouped = new Map<string, CategoryOption[]>();
@@ -292,6 +377,21 @@ export function useRestaurantDetailPage({
 		}
 	}, [draft, hasValidId, restaurantId, updateRestaurantMutation]);
 
+	const handleDelete = useCallback(async () => {
+		if (!restaurant) {
+			return;
+		}
+
+		try {
+			await deleteRestaurantMutation.mutateAsync(restaurantId);
+			onRestaurantDeleted?.();
+		} catch (error) {
+			setErrorMessage(
+				getErrorMessage(error, "맛집 삭제에 실패했습니다."),
+			);
+		}
+	}, [deleteRestaurantMutation, onRestaurantDeleted, restaurant, restaurantId]);
+
 	const handleSync = useCallback(async () => {
 		if (!hasValidId) {
 			return;
@@ -334,11 +434,13 @@ export function useRestaurantDetailPage({
 		handleCancel,
 		handleEditStart,
 		handleSave,
+		handleDeleteRestaurant: handleDelete,
 		handleSync,
 		hasDetailImage,
 		isEditMode,
 		isLoading,
 		isSaving,
+		isDeletingRestaurant: isDeleting,
 		isSyncing,
 		loadErrorMessage,
 		onDraftChange,

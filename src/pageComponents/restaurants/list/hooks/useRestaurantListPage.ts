@@ -5,8 +5,18 @@ import {
 	type PageResponse,
 	type RestaurantListItem,
 	type RestaurantListQuery,
+	type RestaurantRegion,
+	type RestaurantSearchItem,
 } from "#/apis/restaurants";
-import { useGetRestaurants, useSyncAllRestaurants } from "#/hooks";
+import {
+	useCreateRestaurant,
+	useGetCategories,
+	useGetRegions,
+	useDeleteRestaurant,
+	useGetRestaurantSearch,
+	useGetRestaurants,
+	useSyncAllRestaurants,
+} from "#/hooks";
 import {
 	ALL_FILTER_VALUE,
 	LARGE_CATEGORY_CODES,
@@ -45,7 +55,9 @@ const toNonNegativeInteger = (value: string | null, fallback: number) => {
 };
 
 const toRestaurantListQuery = (searchParams: URLSearchParams): RestaurantListQuery => {
-	const page = clampToPageZeroOrAbove(toNonNegativeInteger(searchParams.get("page"), 0));
+	const page = clampToPageZeroOrAbove(
+		toNonNegativeInteger(searchParams.get("page"), 0),
+	);
 	const size = Math.max(
 		1,
 		toNonNegativeInteger(searchParams.get("size"), PAGE_SIZE),
@@ -101,6 +113,9 @@ const isSameRestaurantListQuery = (
 	left.largeCategory === right.largeCategory &&
 	left.categoryId === right.categoryId;
 
+const isValidCategoryId = (value: number | undefined) =>
+	typeof value === "number" && Number.isInteger(value) && value > 0;
+
 export function useRestaurantListPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [query, setQuery] = useState<RestaurantListQuery>(() =>
@@ -109,9 +124,20 @@ export function useRestaurantListPage() {
 	const [keywordInput, setKeywordInput] = useState("");
 	const [pageInputText, setPageInputText] = useState("1");
 	const [toastMessage, setToastMessage] = useState("");
-	const [imageErrorById, setImageErrorById] = useState<Record<number, true>>(
-		{},
-	);
+	const [imageErrorById, setImageErrorById] = useState<Record<number, true>>({});
+	const [isCreatePanelOpen, setIsCreatePanelOpen] = useState(false);
+	const [createSearchInput, setCreateSearchInput] = useState("");
+	const [createSearchKeyword, setCreateSearchKeyword] = useState("");
+	const [hasCreateSearched, setHasCreateSearched] = useState(false);
+	const [selectedCreateExternalId, setSelectedCreateExternalId] = useState("");
+	const [selectedCreateCategoryId, setSelectedCreateCategoryId] =
+		useState<number | undefined>(undefined);
+	const [selectedCreateRegion, setSelectedCreateRegion] = useState("");
+	const [selectedCreateDescription, setSelectedCreateDescription] =
+		useState("");
+	const [deletingRestaurantId, setDeletingRestaurantId] = useState<
+		number | null
+	>(null);
 
 	const {
 		data: pageResponse = DEFAULT_PAGE,
@@ -119,17 +145,60 @@ export function useRestaurantListPage() {
 		isLoading,
 	} = useGetRestaurants(query);
 
+	const {
+		data: categoryOptions = [],
+	} = useGetCategories(isCreatePanelOpen);
+	const { data: regionsResponse } = useGetRegions(isCreatePanelOpen);
+	const regions: RestaurantRegion[] = regionsResponse?.regions ?? [];
+
+	const {
+		data: restaurantSearchResponse,
+		error: restaurantSearchError,
+		isLoading: isRestaurantSearchLoading,
+	} = useGetRestaurantSearch(
+		createSearchKeyword,
+		isCreatePanelOpen && hasCreateSearched,
+	);
+	const searchItems: RestaurantSearchItem[] = restaurantSearchResponse?.items ?? [];
+
 	const syncAllMutation = useSyncAllRestaurants();
+	const createRestaurantMutation = useCreateRestaurant();
+	const deleteRestaurantMutation = useDeleteRestaurant();
 	const isSyncingAll = syncAllMutation.isPending;
+	const isCreatingRestaurant = createRestaurantMutation.isPending;
+	const isDeletingRestaurant = deleteRestaurantMutation.isPending;
+
 	const errorMessage = restaurantListError
 		? getErrorMessage(
 				restaurantListError,
 				"맛집 목록을 불러오지 못했습니다.",
 			)
 		: "";
+	const restaurantSearchErrorMessage = restaurantSearchError
+		? getErrorMessage(
+				restaurantSearchError,
+				"카카오 검색에 실패했습니다.",
+			)
+		: "";
+	const shownRestaurantSearchErrorMessage =
+		hasCreateSearched && isCreatePanelOpen ? restaurantSearchErrorMessage : "";
 
 	const clearToastMessage = useCallback(() => {
 		setToastMessage("");
+	}, []);
+
+	const resetCreateForm = useCallback(() => {
+		setCreateSearchInput("");
+		setCreateSearchKeyword("");
+		setHasCreateSearched(false);
+		setSelectedCreateExternalId("");
+		setSelectedCreateCategoryId(undefined);
+		setSelectedCreateRegion("");
+		setSelectedCreateDescription("");
+	}, []);
+
+	const resetCreateSelection = useCallback(() => {
+		setSelectedCreateExternalId("");
 	}, []);
 
 	const setQueryWithSync = useCallback(
@@ -242,7 +311,7 @@ export function useRestaurantListPage() {
 					rawLargeCategory === ALL_FILTER_VALUE
 						? undefined
 						: rawLargeCategory,
-					categoryId: undefined,
+				categoryId: undefined,
 			}));
 		},
 		[setQueryWithSync],
@@ -312,8 +381,158 @@ export function useRestaurantListPage() {
 		});
 	}, []);
 
+	const handleCreatePanelToggle = useCallback(() => {
+		setIsCreatePanelOpen((current) => {
+			if (current) {
+				resetCreateForm();
+			}
+			return !current;
+		});
+	}, [resetCreateForm]);
+
+	const handleCreateSearchInputChange = useCallback(
+		(value: string) => {
+			setCreateSearchInput(value);
+			if (!value.trim()) {
+				setCreateSearchKeyword("");
+				setHasCreateSearched(false);
+				resetCreateSelection();
+			}
+		},
+		[resetCreateSelection],
+	);
+
+	const handleCreateSearchSubmit = useCallback(() => {
+		const nextSearchKeyword = createSearchInput.trim();
+		if (!nextSearchKeyword) {
+			setToastMessage("검색어를 입력해 주세요.");
+			setCreateSearchKeyword("");
+			setHasCreateSearched(false);
+			return;
+		}
+
+		resetCreateSelection();
+		setCreateSearchKeyword(nextSearchKeyword);
+		setHasCreateSearched(true);
+	}, [createSearchInput, resetCreateSelection]);
+
+	const handleCreateRestaurantSelect = useCallback(
+		(externalId: string) => {
+			setSelectedCreateExternalId(externalId);
+		},
+		[],
+	);
+
+	const handleCreateCategoryChange = useCallback(
+		(categoryId: number | undefined) => {
+			setSelectedCreateCategoryId(
+				isValidCategoryId(categoryId) ? categoryId : undefined,
+			);
+		},
+		[],
+	);
+
+	const handleCreateRegionChange = useCallback((region: string) => {
+		setSelectedCreateRegion(region);
+	}, []);
+
+	const handleCreateDescriptionChange = useCallback((description: string) => {
+		setSelectedCreateDescription(description);
+	}, []);
+
+const handleDeleteRestaurant = useCallback(
+		async (restaurantId: number, _restaurantName: string) => {
+			setDeletingRestaurantId(restaurantId);
+			try {
+				await deleteRestaurantMutation.mutateAsync(restaurantId);
+				setToastMessage("맛집이 삭제되었습니다.");
+			} catch (error) {
+				setToastMessage(
+					getErrorMessage(error, "맛집 삭제에 실패했습니다."),
+				);
+			} finally {
+				setDeletingRestaurantId((currentId) =>
+					currentId === restaurantId ? null : currentId,
+				);
+			}
+		},
+		[deleteRestaurantMutation],
+	);
+
+	const handleCreateRestaurant = useCallback(async () => {
+		const trimmedRegion = selectedCreateRegion.trim();
+		const trimmedDescription = selectedCreateDescription.trim();
+		if (!selectedCreateExternalId) {
+			setToastMessage("생성할 맛집을 선택해 주세요.");
+			return;
+		}
+
+		if (!isValidCategoryId(selectedCreateCategoryId)) {
+			setToastMessage("카테고리를 선택해 주세요.");
+			return;
+		}
+
+		if (!trimmedRegion) {
+			setToastMessage("지역을 선택해 주세요.");
+			return;
+		}
+
+		if (!trimmedDescription) {
+			setToastMessage("맛집 설명을 입력해 주세요.");
+			return;
+		}
+
+		try {
+			const result = await createRestaurantMutation.mutateAsync({
+				externalId: selectedCreateExternalId,
+				categoryId: selectedCreateCategoryId!,
+				region: trimmedRegion,
+				description: trimmedDescription,
+			});
+
+			setToastMessage(
+				result.duplicated
+					? `이미 등록된 맛집입니다. (id: ${result.restaurantId})`
+					: `맛집 생성이 완료되었습니다. (id: ${result.restaurantId})`,
+			);
+
+			if (!result.duplicated) {
+				setCreateSearchInput("");
+				setCreateSearchKeyword("");
+				setHasCreateSearched(false);
+				resetCreateSelection();
+				setSelectedCreateDescription("");
+			}
+		} catch (error) {
+			setToastMessage(
+				getErrorMessage(error, "맛집 생성에 실패했습니다."),
+			);
+		}
+	}, [
+		createRestaurantMutation,
+		selectedCreateCategoryId,
+		selectedCreateDescription,
+		selectedCreateExternalId,
+		selectedCreateRegion,
+		resetCreateSelection,
+	]);
+
+	const canCreateRestaurant = Boolean(
+		selectedCreateExternalId &&
+			isValidCategoryId(selectedCreateCategoryId) &&
+			selectedCreateDescription.trim() &&
+			selectedCreateRegion.trim(),
+	);
+
 	return {
 		errorMessage,
+		handleCreateCategoryChange,
+		handleCreatePanelToggle,
+		handleCreateRegionChange,
+		handleCreateRestaurant,
+		handleCreateRestaurantSelect,
+		handleCreateSearchInputChange,
+		handleCreateSearchSubmit,
 		handleImageError,
 		handleLargeCategoryChange,
 		handlePageInputChange,
@@ -322,16 +541,35 @@ export function useRestaurantListPage() {
 		handleRegionChange,
 		handleSyncAll,
 		imageErrorById,
+		isCreatePanelOpen,
+		isCreateRestaurantLoading: isCreatingRestaurant,
 		isLoading,
+		isSearchLoading: isRestaurantSearchLoading,
 		isSyncingAll,
+		isDeletingRestaurant,
+		isSearched: hasCreateSearched,
 		keywordInput,
 		largeCategoryOptions,
 		pageInputText,
 		pageResponse,
 		query,
 		regionOptions,
+		regions,
+		searchErrorMessage: shownRestaurantSearchErrorMessage,
+		createSearchItems: searchItems,
+		deletingRestaurantId,
+		handleDeleteRestaurant,
 		setKeywordInput,
 		toastMessage,
 		applySearch,
+		categoryOptions,
+		createSearchKeyword,
+		selectedCreateExternalId,
+		selectedCreateCategoryId,
+		selectedCreateRegion,
+		selectedCreateDescription,
+		handleCreateDescriptionChange,
+		createSearchInput,
+		canCreateRestaurant,
 	};
 }

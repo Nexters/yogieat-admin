@@ -1,8 +1,25 @@
 export const RESTAURANT_ENDPOINT_CONTRACTS = {
 	getCategories: {
 		method: "GET",
-		path: "/sdui/categories",
+		path: "/categories",
 		response: "CategoryOption[]",
+	},
+	searchRestaurants: {
+		method: "GET",
+		path: "/restaurants/search",
+		query: ["keyword"],
+		response: "RestaurantSearchResponse",
+	},
+	createRestaurant: {
+		method: "POST",
+		path: "/restaurants",
+		request: "RestaurantCreateRequest",
+		response: "RestaurantCreateResponse",
+	},
+	getRegions: {
+		method: "GET",
+		path: "/regions",
+		response: "RestaurantRegionsResponse",
 	},
 	getRestaurants: {
 		method: "GET",
@@ -27,6 +44,11 @@ export const RESTAURANT_ENDPOINT_CONTRACTS = {
 		path: "/restaurants/:id",
 		request: "RestaurantPatchRequest",
 		response: "RestaurantDetail",
+	},
+	deleteRestaurant: {
+		method: "DELETE",
+		path: "/restaurants/:id",
+		response: "void",
 	},
 	getSyncRestaurantJob: {
 		method: "GET",

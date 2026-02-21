@@ -6,7 +6,10 @@ import { useGetGatheringById } from "#/hooks";
 import { NotFoundPage } from "#/pageComponents/common";
 import { useAuth } from "#/providers";
 import {
+	toDistanceRangeLabel,
+	toLargeCategoryLabel,
 	toRegionLabel,
+	toParticipantRoleLabel,
 	toTimeSlotLabel,
 } from "#/shared/constants/DomainLabels";
 import { AdminTopbar, Button } from "#/shared/ui";
@@ -75,12 +78,25 @@ export function GatheringDetailPage() {
 		}
 		return detail.participants.reduce<Record<number, string>>(
 			(acc, participant) => {
-				acc[participant.id] = participant.preferences.join(", ");
+				acc[participant.id] = participant.preferences
+					.map((preference) => toLargeCategoryLabel(preference))
+					.join(", ");
 				return acc;
 			},
 			{},
 		);
 	}, [detail]);
+
+	const resolveDislikesLabel = (dislikes: string | null | undefined): string => {
+		const mapped = (dislikes ?? "")
+			.split(",")
+			.map((dislike) => dislike.trim())
+			.filter(Boolean)
+			.map((dislike) => toLargeCategoryLabel(dislike))
+			.join(", ");
+
+		return mapped || "-";
+	};
 
 	if (!hasValidId) {
 		return (
@@ -268,14 +284,18 @@ export function GatheringDetailPage() {
 								<tr key={participant.id}>
 									<td>{participant.id}</td>
 									<td>{participant.nickname}</td>
-									<td>{participant.role}</td>
-									<td>{participant.distanceRange}</td>
+									<td>{toParticipantRoleLabel(participant.role)}</td>
+									<td>{toDistanceRangeLabel(participant.distanceRange)}</td>
 									<td>
 										{participantPreferencesById[
 											participant.id
 										] || "-"}
 									</td>
-									<td>{participant.dislikes}</td>
+									<td>
+										{resolveDislikesLabel(
+											participant.dislikes,
+										)}
+									</td>
 									<td>
 										{formatOptionalDateTime(
 											participant.updatedAt,
@@ -300,18 +320,30 @@ export function GatheringDetailPage() {
 						>
 							<div className="admin-participant-card__header">
 								<h3>{participant.nickname}</h3>
-								<span>{participant.role}</span>
+								<span>
+									{toParticipantRoleLabel(participant.role)}
+								</span>
 							</div>
 							<div className="admin-participant-card__meta">
 								<span>ID: {participant.id}</span>
-								<span>거리: {participant.distanceRange}</span>
+								<span>
+									거리:{" "}
+									{toDistanceRangeLabel(
+										participant.distanceRange,
+									)}
+								</span>
 								<span>
 									선호:{" "}
 									{participantPreferencesById[
 										participant.id
 									] || "-"}
 								</span>
-								<span>비선호: {participant.dislikes}</span>
+								<span>
+									비선호:{" "}
+									{resolveDislikesLabel(
+										participant.dislikes,
+									)}
+								</span>
 								<span>
 									수정일:{" "}
 										{formatOptionalDateTime(

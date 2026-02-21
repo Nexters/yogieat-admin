@@ -3,6 +3,7 @@ import { rest } from "msw";
 import {
 	GatheringListQuery,
 	LoginRequest,
+	RestaurantCreateRequest,
 	RestaurantPatchRequest,
 	RestaurantListQuery,
 } from "#/apis/admin/types";
@@ -71,7 +72,10 @@ const parseGatheringListQuery = (url: URL): GatheringListQuery => {
 	const region = url.searchParams.get("region") ?? undefined;
 	const rawTimeSlot = url.searchParams.get("timeSlot");
 	const timeSlot =
-		rawTimeSlot && TIME_SLOT_CODES.includes(rawTimeSlot as (typeof TIME_SLOT_CODES)[number])
+		rawTimeSlot &&
+		TIME_SLOT_CODES.includes(
+			rawTimeSlot as (typeof TIME_SLOT_CODES)[number],
+		)
 			? (rawTimeSlot as GatheringListQuery["timeSlot"])
 			: undefined;
 	const includeDeleted = toBooleanOrDefault(
@@ -125,63 +129,60 @@ const parseResourceId = (
 };
 
 export const handlers = [
-	rest.post(
-		"*/api/v1/admin/auth/refresh",
-		async (request, response, ctx) => {
-			const payload = (await request.json()) as { refreshToken?: string };
-			const refreshToken = payload?.refreshToken?.trim();
+	rest.post("*/api/v1/admin/auth/refresh", async (request, response, ctx) => {
+		const payload = (await request.json()) as { refreshToken?: string };
+		const refreshToken = payload?.refreshToken?.trim();
 
-			if (!refreshToken) {
-				return response(
-					ctx.delay(DEFAULT_DELAY_MS),
-					ctx.status(401),
-					ctx.json(
-						createErrorResponse(
-							401,
-							ADMIN_ERROR_CODE.UNAUTHORIZED,
-							"리프레시 토큰이 필요합니다.",
-						),
+		if (!refreshToken) {
+			return response(
+				ctx.delay(DEFAULT_DELAY_MS),
+				ctx.status(401),
+				ctx.json(
+					createErrorResponse(
+						401,
+						ADMIN_ERROR_CODE.UNAUTHORIZED,
+						"리프레시 토큰이 필요합니다.",
 					),
-				);
-			}
+				),
+			);
+		}
 
-			const seed = Date.now();
-			const accessTokenExpiresIn = 1000 * 60 * 60;
-			const refreshTokenExpiresIn = 7 * 24 * 60 * 60 * 1000;
+		const seed = Date.now();
+		const accessTokenExpiresIn = 1000 * 60 * 60;
+		const refreshTokenExpiresIn = 7 * 24 * 60 * 60 * 1000;
+
+		return response(
+			ctx.delay(DEFAULT_DELAY_MS),
+			ctx.json(
+				createSuccessResponse({
+					accessToken: `mock-access-${seed}`,
+					refreshToken: `mock-refresh-${seed}`,
+					tokenType: "Bearer",
+					accessTokenExpiresIn,
+					refreshTokenExpiresIn,
+				}),
+			),
+		);
+	}),
+
+	rest.post("*/api/v1/admin/auth/login", async (request, response, ctx) => {
+		const payload = (await request.json()) as LoginRequest;
+
+		try {
+			const session = adminMockDb.login(payload);
 
 			return response(
 				ctx.delay(DEFAULT_DELAY_MS),
 				ctx.json(
 					createSuccessResponse({
-						accessToken: `mock-access-${seed}`,
-						refreshToken: `mock-refresh-${seed}`,
+						accessToken: session.tokenBundle.accessToken,
+						refreshToken: session.tokenBundle.refreshToken,
 						tokenType: "Bearer",
-						accessTokenExpiresIn,
-						refreshTokenExpiresIn,
+						expiresAt: session.tokenBundle.expiresAt,
+						adminId: session.adminId,
+						name: session.name,
+						roles: session.roles,
 					}),
-				),
-			);
-		},
-	),
-
-	rest.post("*/api/v1/admin/auth/login", async (request, response, ctx) => {
-		const payload = (await request.json()) as LoginRequest;
-
-			try {
-				const session = adminMockDb.login(payload);
-
-				return response(
-					ctx.delay(DEFAULT_DELAY_MS),
-				ctx.json(
-						createSuccessResponse({
-							accessToken: session.tokenBundle.accessToken,
-							refreshToken: session.tokenBundle.refreshToken,
-							tokenType: "Bearer",
-							expiresAt: session.tokenBundle.expiresAt,
-							adminId: session.adminId,
-							name: session.name,
-							roles: session.roles,
-						}),
 				),
 			);
 		} catch (error) {
@@ -202,23 +203,17 @@ export const handlers = [
 	}),
 
 	rest.post("*/api/v1/admin/auth/logout", async (_request, response, ctx) => {
+		return response(ctx.delay(80), ctx.json(createSuccessResponse(null)));
+	}),
+
+	rest.get("*/api/v1/admin/categories", async (_request, response, ctx) => {
 		return response(
-			ctx.delay(80),
-			ctx.json(createSuccessResponse(null)),
+			ctx.delay(120),
+			ctx.json(createSuccessResponse(adminMockDb.getCategories())),
 		);
 	}),
 
-	rest.get(
-		"*/api/v1/admin/sdui/categories",
-		async (_request, response, ctx) => {
-			return response(
-				ctx.delay(120),
-				ctx.json(createSuccessResponse(adminMockDb.getCategories())),
-			);
-		},
-	),
-
-	rest.get("*/api/v1/sdui/categories", async (_request, response, ctx) => {
+	rest.get("*/api/v1/categories", async (_request, response, ctx) => {
 		return response(
 			ctx.delay(120),
 			ctx.json(createSuccessResponse(adminMockDb.getCategories())),
@@ -230,7 +225,9 @@ export const handlers = [
 		async (_request, response, ctx) => {
 			return response(
 				ctx.delay(180),
-				ctx.json(createSuccessResponse(adminMockDb.getGatheringDashboard())),
+				ctx.json(
+					createSuccessResponse(adminMockDb.getGatheringDashboard()),
+				),
 			);
 		},
 	),
@@ -265,7 +262,10 @@ export const handlers = [
 				);
 			}
 
-			return response(ctx.delay(180), ctx.json(createSuccessResponse(gathering)));
+			return response(
+				ctx.delay(180),
+				ctx.json(createSuccessResponse(gathering)),
+			);
 		},
 	),
 
@@ -274,6 +274,69 @@ export const handlers = [
 		return response(
 			ctx.delay(DEFAULT_DELAY_MS),
 			ctx.json(createSuccessResponse(adminMockDb.getRestaurants(query))),
+		);
+	}),
+
+	rest.get(
+		"*/api/v1/admin/restaurants/search",
+		async (request, response, ctx) => {
+			const keyword = request.url.searchParams.get("keyword")?.trim();
+			if (!keyword) {
+				return response(
+					ctx.delay(120),
+					ctx.status(400),
+					ctx.json(
+						createErrorResponse(
+							400,
+							COMMON_ERROR_CODE.METHOD_ARGUMENT_TYPE_MISMATCH,
+							"검색어를 입력해 주세요.",
+						),
+					),
+				);
+			}
+
+			return response(
+				ctx.delay(DEFAULT_DELAY_MS),
+				ctx.json(createSuccessResponse(adminMockDb.searchRestaurants(keyword))),
+			);
+		},
+	),
+
+	rest.post(
+		"*/api/v1/admin/restaurants",
+		async (request, response, ctx) => {
+			const payload = (await request.json()) as RestaurantCreateRequest;
+			try {
+				const result = adminMockDb.createRestaurant(payload);
+				return response(
+					ctx.delay(DEFAULT_DELAY_MS),
+					ctx.status(result.duplicated ? 200 : 201),
+					ctx.json(
+						createSuccessResponse(result, result.duplicated ? 200 : 201),
+					),
+				);
+			} catch (error) {
+				return response(
+					ctx.delay(DEFAULT_DELAY_MS),
+					ctx.status(400),
+					ctx.json(
+						createErrorResponse(
+							400,
+							RESTAURANT_ERROR_CODE.CATEGORY_NOT_FOUND,
+							error instanceof Error
+								? error.message
+								: "맛집 생성 요청이 잘못되었습니다.",
+						),
+					),
+				);
+			}
+		},
+	),
+
+	rest.get("*/api/v1/admin/regions", async (_request, response, ctx) => {
+		return response(
+			ctx.delay(DEFAULT_DELAY_MS),
+			ctx.json(createSuccessResponse(adminMockDb.getRegions())),
 		);
 	}),
 
@@ -299,7 +362,10 @@ export const handlers = [
 				);
 			}
 
-			return response(ctx.delay(180), ctx.json(createSuccessResponse(restaurant)));
+			return response(
+				ctx.delay(180),
+				ctx.json(createSuccessResponse(restaurant)),
+			);
 		},
 	),
 
@@ -331,6 +397,48 @@ export const handlers = [
 							error instanceof Error
 								? error.message
 								: "맛집 수정에 실패했습니다.",
+						),
+					),
+				);
+			}
+		},
+	),
+
+	rest.delete(
+		"*/api/v1/admin/restaurants/:restaurantId",
+		async (request, response, ctx) => {
+			const restaurantId = parseResourceId(
+				request.params.restaurantId as string | undefined,
+			);
+
+			if (!Number.isFinite(restaurantId)) {
+				return response(
+					ctx.delay(180),
+					ctx.status(400),
+					ctx.json(
+						createErrorResponse(
+							400,
+							COMMON_ERROR_CODE.METHOD_ARGUMENT_TYPE_MISMATCH,
+							"맛집 ID 형식이 올바르지 않습니다.",
+						),
+					),
+				);
+			}
+
+			try {
+				adminMockDb.deleteRestaurant(restaurantId);
+				return response(ctx.delay(180), ctx.status(204));
+			} catch (error) {
+				return response(
+					ctx.delay(180),
+					ctx.status(404),
+					ctx.json(
+						createErrorResponse(
+							404,
+							RESTAURANT_ERROR_CODE.NOT_FOUND,
+							error instanceof Error
+								? error.message
+								: "맛집 삭제에 실패했습니다.",
 						),
 					),
 				);
@@ -408,7 +516,10 @@ export const handlers = [
 		"*/api/v1/restaurants/sync-jobs/all",
 		async (_request, response, ctx) => {
 			const result = adminMockDb.syncAllRestaurants();
-			return response(ctx.delay(520), ctx.json(createSuccessResponse(result)));
+			return response(
+				ctx.delay(520),
+				ctx.json(createSuccessResponse(result)),
+			);
 		},
 	),
 
@@ -434,7 +545,10 @@ export const handlers = [
 
 			try {
 				const job = adminMockDb.getSyncRestaurantJob(jobId);
-				return response(ctx.delay(220), ctx.json(createSuccessResponse(job)));
+				return response(
+					ctx.delay(220),
+					ctx.json(createSuccessResponse(job)),
+				);
 			} catch (error) {
 				return response(
 					ctx.delay(220),
@@ -462,7 +576,10 @@ export const handlers = [
 
 			try {
 				const result = adminMockDb.syncRestaurant(restaurantId);
-				return response(ctx.delay(320), ctx.json(createSuccessResponse(result)));
+				return response(
+					ctx.delay(320),
+					ctx.json(createSuccessResponse(result)),
+				);
 			} catch (error) {
 				return response(
 					ctx.delay(320),
@@ -485,7 +602,10 @@ export const handlers = [
 		"*/api/v1/admin/restaurants/sync",
 		async (_request, response, ctx) => {
 			const result = adminMockDb.syncAllRestaurants();
-			return response(ctx.delay(520), ctx.json(createSuccessResponse(result)));
+			return response(
+				ctx.delay(520),
+				ctx.json(createSuccessResponse(result)),
+			);
 		},
 	),
 ];

@@ -39,7 +39,12 @@ type RestaurantListContentProps = {
 	handleImageError: (restaurantId: number) => void;
 	imageErrorById: Record<number, true>;
 	isLoading: boolean;
+	deletingRestaurantId: number | null;
 	onNavigateDetail: (restaurantId: number) => void;
+	onDeleteRestaurant: (
+		restaurantId: number,
+		restaurantName: string,
+	) => Promise<void>;
 	restaurants: RestaurantListItem[];
 };
 
@@ -48,7 +53,9 @@ export function RestaurantListContent({
 	handleImageError,
 	imageErrorById,
 	isLoading,
+	deletingRestaurantId,
 	onNavigateDetail,
+	onDeleteRestaurant,
 	restaurants,
 }: RestaurantListContentProps) {
 	return (
@@ -65,19 +72,20 @@ export function RestaurantListContent({
 							<th>지역</th>
 							<th>수정일</th>
 							<th>상세</th>
+							<th>삭제</th>
 						</tr>
 					</thead>
 					<tbody>
 						{isLoading ? (
 							<tr>
-								<td colSpan={8} className="admin-table__status">
+								<td colSpan={9} className="admin-table__status">
 									목록을 불러오는 중입니다.
 								</td>
 							</tr>
 						) : null}
 						{!isLoading && errorMessage ? (
 							<tr>
-								<td colSpan={8} className="admin-table__status">
+								<td colSpan={9} className="admin-table__status">
 									{errorMessage}
 								</td>
 							</tr>
@@ -86,7 +94,7 @@ export function RestaurantListContent({
 						!errorMessage &&
 						restaurants.length === 0 ? (
 							<tr>
-								<td colSpan={8} className="admin-table__status">
+								<td colSpan={9} className="admin-table__status">
 									조건에 맞는 맛집이 없습니다.
 								</td>
 							</tr>
@@ -143,6 +151,30 @@ export function RestaurantListContent({
 											상세
 										</Button>
 									</td>
+									<td>
+										<Button
+											size="sm"
+											variant="secondary"
+											loading={
+												deletingRestaurantId ===
+												restaurant.id
+											}
+											disabled={
+												deletingRestaurantId !== null &&
+												deletingRestaurantId !==
+													restaurant.id
+											}
+											onClick={(event) => {
+												event.stopPropagation();
+												onDeleteRestaurant(
+													restaurant.id,
+													restaurant.name,
+												);
+											}}
+										>
+											삭제
+										</Button>
+									</td>
 								</tr>
 							))}
 					</tbody>
@@ -189,11 +221,30 @@ export function RestaurantListContent({
 								<Button
 									size="sm"
 									variant="secondary"
-									onClick={() =>
-										onNavigateDetail(restaurant.id)
-									}
+									onClick={(event) => {
+										event.stopPropagation();
+										onNavigateDetail(restaurant.id);
+									}}
 								>
 									상세 보기
+								</Button>
+								<Button
+									size="sm"
+									variant="tertiary"
+									loading={deletingRestaurantId === restaurant.id}
+									disabled={
+										deletingRestaurantId !== null &&
+										deletingRestaurantId !== restaurant.id
+									}
+									onClick={(event) => {
+										event.stopPropagation();
+										onDeleteRestaurant(
+											restaurant.id,
+											restaurant.name,
+										);
+									}}
+								>
+									삭제
 								</Button>
 							</div>
 							<div className="admin-restaurant-card__meta">

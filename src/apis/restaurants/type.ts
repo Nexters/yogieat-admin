@@ -69,6 +69,48 @@ export type CategoryOption = {
 	depth?: number;
 };
 
+export type RestaurantSearchItem = {
+	externalId: string;
+	placeName: string;
+	addressName: string;
+	roadAddressName: string;
+	category: string;
+	x: string;
+	y: string;
+};
+
+export type RestaurantSearchResponse = {
+	keyword: string;
+	items: RestaurantSearchItem[];
+};
+
+export type RestaurantCreateRequest = {
+	externalId: string;
+	categoryId: number;
+	region: string;
+	description: string;
+};
+
+export type RestaurantCreateResponse = {
+	restaurantId: number;
+	duplicated: boolean;
+};
+
+export type RestaurantRegionCoordinates = {
+	coordinates: [number, number];
+	type: "Point";
+};
+
+export type RestaurantRegion = {
+	name: string;
+	displayName: string;
+	coordinatesStandard: RestaurantRegionCoordinates;
+};
+
+export type RestaurantRegionsResponse = {
+	regions: RestaurantRegion[];
+};
+
 export type CreateRestaurantSyncJobResponse = {
 	jobId: number;
 	scope: RestaurantSyncScope;

@@ -1,14 +1,21 @@
 import { mutationOptions } from "@tanstack/react-query";
 
 import {
+	createRestaurant,
 	syncAllRestaurants,
 	syncRestaurant,
+	deleteRestaurant,
 	updateRestaurant,
 } from "#/apis/restaurants/api";
 import { restaurantKeys } from "#/apis/restaurants/queryKey";
 import type { RestaurantPatchRequest } from "#/apis/restaurants/type";
 
 export const restaurantMutationOptions = {
+	create: () =>
+		mutationOptions({
+			mutationKey: [...restaurantKeys.all, "create"] as const,
+			mutationFn: createRestaurant,
+		}),
 	update: () =>
 		mutationOptions({
 			mutationKey: [...restaurantKeys.all, "update"] as const,
@@ -19,6 +26,11 @@ export const restaurantMutationOptions = {
 				id: number;
 				patch: RestaurantPatchRequest;
 			}) => updateRestaurant(id, patch),
+		}),
+	deleteById: () =>
+		mutationOptions({
+			mutationKey: [...restaurantKeys.all, "delete"] as const,
+			mutationFn: (id: number) => deleteRestaurant(id),
 		}),
 	syncById: () =>
 		mutationOptions({

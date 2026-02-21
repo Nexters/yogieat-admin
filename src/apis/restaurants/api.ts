@@ -1,8 +1,12 @@
 import { adminService } from "#/apis/admin";
 import type {
+	RestaurantCreateRequest,
+	RestaurantCreateResponse,
 	CategoryOption,
 	PageResponse,
 	RestaurantDetail,
+	RestaurantRegionsResponse,
+	RestaurantSearchResponse,
 	RestaurantListItem,
 	RestaurantListQuery,
 	RestaurantPatchRequest,
@@ -12,6 +16,22 @@ import type {
 
 export const getCategories = (): Promise<CategoryOption[]> => {
 	return adminService.getCategories();
+};
+
+export const searchRestaurants = (
+	keyword: string,
+): Promise<RestaurantSearchResponse> => {
+	return adminService.searchRestaurants(keyword);
+};
+
+export const createRestaurant = (
+	request: RestaurantCreateRequest,
+): Promise<RestaurantCreateResponse> => {
+	return adminService.createRestaurant(request);
+};
+
+export const getRegions = (): Promise<RestaurantRegionsResponse> => {
+	return adminService.getRegions();
 };
 
 export const getRestaurants = (
@@ -31,6 +51,10 @@ export const updateRestaurant = (
 	patch: RestaurantPatchRequest,
 ): Promise<RestaurantDetail> => {
 	return adminService.updateRestaurant(id, patch);
+};
+
+export const deleteRestaurant = (id: number): Promise<void> => {
+	return adminService.deleteRestaurant(id);
 };
 
 export const syncRestaurant = (

@@ -10,7 +10,76 @@ import {
 	EvidenceSection,
 	LocationSection,
 } from "#/pageComponents/restaurants/detail/sections";
-import { AdminTopbar, Button, Toast } from "#/shared/ui";
+import {
+	AdminTopbar,
+	Button,
+	Toast,
+} from "#/shared/ui";
+
+type RestaurantDetailNavigateState = {
+	from?: string;
+	fromQuery?: {
+		page?: number;
+		size?: number;
+		keyword?: string;
+		region?: string;
+		largeCategory?: string;
+		categoryId?: number;
+	};
+};
+
+const toSafeQueryValue = (value: unknown) => {
+	if (typeof value === "string") {
+		const trimmed = value.trim();
+		return trimmed.length > 0 ? trimmed : undefined;
+	}
+
+	return undefined;
+};
+
+const toSafePositiveInteger = (value: unknown) => {
+	if (typeof value !== "number" || !Number.isFinite(value)) {
+		return undefined;
+	}
+
+	return Number.isInteger(value) && value >= 0 ? value : undefined;
+};
+
+const buildRestaurantListPathFromQuery = (
+	query:
+		| RestaurantDetailNavigateState["fromQuery"]
+		| undefined,
+): string => {
+	const search = new URLSearchParams();
+	const page = toSafePositiveInteger(query?.page);
+	const size = toSafePositiveInteger(query?.size);
+
+	search.set("page", String(page ?? 0));
+	if (size) {
+		search.set("size", String(size));
+	}
+
+	const keyword = toSafeQueryValue(query?.keyword);
+	const region = toSafeQueryValue(query?.region);
+	const largeCategory = toSafeQueryValue(query?.largeCategory);
+	const categoryId = toSafePositiveInteger(query?.categoryId);
+
+	if (keyword) {
+		search.set("keyword", keyword);
+	}
+	if (region) {
+		search.set("region", region);
+	}
+	if (largeCategory) {
+		search.set("largeCategory", largeCategory);
+	}
+	if (typeof categoryId === "number") {
+		search.set("categoryId", String(categoryId));
+	}
+
+	const queryString = search.toString();
+	return queryString ? `/restaurants?${queryString}` : "/restaurants";
+};
 
 export function RestaurantDetailPage() {
 	const navigate = useNavigate();
@@ -18,6 +87,14 @@ export function RestaurantDetailPage() {
 	const { restaurantId: restaurantIdParam } = useParams();
 	const restaurantId = Number(restaurantIdParam);
 	const hasValidId = Number.isFinite(restaurantId) && restaurantId > 0;
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+	const state = location.state as RestaurantDetailNavigateState | undefined;
+	const returnTo = state?.from?.startsWith("/restaurants")
+		? state.from
+		: buildRestaurantListPathFromQuery(state?.fromQuery);
+	const handleGoList = () => {
+		navigate(returnTo, { replace: true });
+	};
 
 	const {
 		activeCategoryGroup,
@@ -25,6 +102,7 @@ export function RestaurantDetailPage() {
 		categoryKeyword,
 		detailImageSrc,
 		draft,
+		handleDeleteRestaurant,
 		errorMessage,
 		filteredMediumCategories,
 		handleCancel,
@@ -35,12 +113,12 @@ export function RestaurantDetailPage() {
 		isEditMode,
 		isLoading,
 		isSaving,
+		isDeletingRestaurant,
 		isSyncing,
 		loadErrorMessage,
 		onDraftChange,
 		regionOptions,
 		restaurant,
-		selectedCategory,
 		selectedCategoryInDraft,
 		selectedCategoryLabel,
 		setActiveLargeCategory,
@@ -52,10 +130,20 @@ export function RestaurantDetailPage() {
 	} = useRestaurantDetailPage({
 		hasValidId,
 		restaurantId,
+		onRestaurantDeleted: handleGoList,
 	});
-	const returnTo =
-		(location.state as { from?: string } | undefined)?.from ??
-		"/restaurants";
+
+	const openDeleteDialog = () => {
+		if (!restaurant) {
+			return;
+		}
+		setIsDeleteDialogOpen(true);
+	};
+
+	const handleDeleteConfirm = async () => {
+		await handleDeleteRestaurant();
+		setIsDeleteDialogOpen(false);
+	};
 
 	if (!hasValidId) {
 		return (
@@ -99,7 +187,7 @@ export function RestaurantDetailPage() {
 						<Button
 							variant="inverse"
 							size="sm"
-							onClick={() => navigate(returnTo)}
+							onClick={handleGoList}
 						>
 							목록으로
 						</Button>
@@ -140,6 +228,14 @@ export function RestaurantDetailPage() {
 						)}
 						<Button
 							size="sm"
+							variant="tertiary"
+							loading={isDeletingRestaurant}
+							onClick={openDeleteDialog}
+						>
+							삭제
+						</Button>
+						<Button
+							size="sm"
 							variant="primary"
 							loading={isSyncing}
 							disabled={isSaving}
@@ -176,15 +272,14 @@ export function RestaurantDetailPage() {
 						onClearCategory={() => setCategoryId(null)}
 						onDraftChange={onDraftChange}
 						onLargeCategoryChange={setActiveLargeCategory}
-						onSelectCategory={setCategoryId}
-						draft={draft}
-						regionOptions={regionOptions}
-						restaurant={restaurant}
-						selectedCategory={selectedCategory}
-						selectedCategoryInDraft={selectedCategoryInDraft}
-						selectedCategoryLabel={selectedCategoryLabel}
-						toCategoryLabel={toCategoryLabel}
-					/>
+							onSelectCategory={setCategoryId}
+							draft={draft}
+							regionOptions={regionOptions}
+							restaurant={restaurant}
+							selectedCategoryInDraft={selectedCategoryInDraft}
+							selectedCategoryLabel={selectedCategoryLabel}
+							toCategoryLabel={toCategoryLabel}
+						/>
 					<LocationSection
 						isEditMode={isEditMode}
 						onDraftChange={onDraftChange}
@@ -211,6 +306,49 @@ export function RestaurantDetailPage() {
 					<Toast message={toastMessage} />
 				</div>
 			) : null}
-		</main>
-	);
-}
+
+				{isDeleteDialogOpen ? (
+					<div
+						className="admin-confirm-modal__overlay"
+						onClick={(event) => {
+							if (event.target === event.currentTarget) {
+								setIsDeleteDialogOpen(false);
+							}
+						}}
+						role="presentation"
+					>
+							<div className="admin-confirm-modal__content">
+									<h3>맛집 삭제</h3>
+									<p className="admin-confirm-modal__description">
+										<strong>{`"${restaurant?.name}"`}</strong>
+										{` 맛집을 삭제하시겠습니까?`}
+										<span className="admin-confirm-modal__warning">
+											삭제하면 복구할 수 없습니다.
+										</span>
+									</p>
+							<div className="admin-confirm-modal__buttons">
+								<Button
+									size="sm"
+									variant="secondary"
+									type="button"
+									onClick={() => setIsDeleteDialogOpen(false)}
+									disabled={isDeletingRestaurant}
+								>
+									취소
+								</Button>
+								<Button
+									size="sm"
+									variant="tertiary"
+									loading={isDeletingRestaurant}
+									onClick={handleDeleteConfirm}
+									disabled={isDeletingRestaurant}
+								>
+									삭제
+								</Button>
+							</div>
+						</div>
+					</div>
+				) : null}
+			</main>
+		);
+	}

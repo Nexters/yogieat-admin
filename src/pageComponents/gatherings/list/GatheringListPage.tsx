@@ -1,4 +1,4 @@
-import React, { FormEvent, useMemo, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -70,6 +70,7 @@ export function GatheringListPage() {
 		size: PAGE_SIZE,
 		includeDeleted: false,
 	});
+	const [pageInputText, setPageInputText] = useState("1");
 	const {
 		data: pageResponse = DEFAULT_PAGE,
 		error: gatheringListError,
@@ -151,6 +152,8 @@ export function GatheringListPage() {
 
 	const handlePageMove = (direction: "prev" | "next") => {
 		setQuery((current) => {
+			const totalPages = Math.max(pageResponse.totalPages, 1);
+			const maxPage = Math.max(totalPages - 1, 0);
 			if (direction === "prev") {
 				return {
 					...current,
@@ -160,10 +163,38 @@ export function GatheringListPage() {
 
 			return {
 				...current,
-				page: current.page + 1,
+				page: Math.min(current.page + 1, maxPage),
 			};
 		});
 	};
+
+	const handlePageSubmit = (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		const parsed = Number.parseInt(pageInputText, 10);
+		if (!Number.isFinite(parsed)) {
+			setPageInputText(String(Math.min(pageResponse.page + 1, pageResponse.totalPages)));
+			return;
+		}
+
+		const totalPages = Math.max(pageResponse.totalPages, 1);
+		const maxPage = Math.max(totalPages - 1, 0);
+		const requestedPage = parsed - 1;
+		const safePage = Math.max(0, Math.min(requestedPage, maxPage));
+		setQuery((current) => ({
+			...current,
+			page: safePage,
+		}));
+	};
+
+	const handlePageInputChange = (value: string) => {
+		setPageInputText(value);
+	};
+
+	useEffect(() => {
+		setPageInputText(
+			String(Math.min(pageResponse.page + 1, pageResponse.totalPages)),
+		);
+	}, [pageResponse.page, pageResponse.totalPages]);
 
 	return (
 		<main className="admin-shell">
@@ -452,6 +483,26 @@ export function GatheringListPage() {
 						{pageResponse.page + 1} / {pageResponse.totalPages}
 						&nbsp;({pageResponse.totalElements}건)
 					</span>
+					<form
+						className="admin-pagination__jump"
+						onSubmit={handlePageSubmit}
+					>
+						<label className="admin-pagination__jump-label">
+							<input
+								value={pageInputText}
+								type="text"
+								inputMode="numeric"
+								pattern="[0-9]*"
+								aria-label="이동할 페이지(1부터 시작)"
+								onChange={(event) =>
+									handlePageInputChange(event.target.value)
+								}
+							/>
+							<Button size="sm" variant="inverse" type="submit">
+								이동
+							</Button>
+						</label>
+					</form>
 					<Button
 						size="sm"
 						variant="inverse"

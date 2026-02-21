@@ -12,12 +12,18 @@ import type {
 	ParticipantRole,
 } from "#/apis/gatherings";
 import type {
-	CategoryOption,
 	PageResponse,
 	RestaurantDetail,
+	CategoryOption,
 	RestaurantListItem,
 	RestaurantListQuery,
+	RestaurantRegion,
 	RestaurantPatchRequest,
+	RestaurantSearchItem,
+	RestaurantSearchResponse,
+	RestaurantCreateRequest,
+	RestaurantCreateResponse,
+	RestaurantRegionsResponse,
 	CreateRestaurantSyncJobResponse,
 	GetRestaurantSyncJobResponse,
 	TimeSlot,
@@ -41,7 +47,13 @@ export type {
 	RestaurantDetail,
 	RestaurantListItem,
 	RestaurantListQuery,
+	RestaurantRegion,
 	RestaurantPatchRequest,
+	RestaurantSearchItem,
+	RestaurantSearchResponse,
+	RestaurantCreateRequest,
+	RestaurantCreateResponse,
+	RestaurantRegionsResponse,
 	CreateRestaurantSyncJobResponse,
 	GetRestaurantSyncJobResponse,
 	TimeSlot,
@@ -51,6 +63,11 @@ export type {
 export type AdminService = {
 	login: (request: LoginRequest) => Promise<AdminSession>;
 	logout: () => Promise<void>;
+	searchRestaurants: (keyword: string) => Promise<RestaurantSearchResponse>;
+	createRestaurant: (
+		request: RestaurantCreateRequest,
+	) => Promise<RestaurantCreateResponse>;
+	getRegions: () => Promise<RestaurantRegionsResponse>;
 	getCategories: () => Promise<CategoryOption[]>;
 	getGatheringDashboard: () => Promise<GatheringDashboardData>;
 	getGatherings: (
@@ -65,6 +82,7 @@ export type AdminService = {
 		id: number,
 		patch: RestaurantPatchRequest,
 	) => Promise<RestaurantDetail>;
+	deleteRestaurant: (id: number) => Promise<void>;
 	syncRestaurant: (id: number) => Promise<CreateRestaurantSyncJobResponse>;
 	syncAllRestaurants: () => Promise<CreateRestaurantSyncJobResponse>;
 	getSyncRestaurantJob: (

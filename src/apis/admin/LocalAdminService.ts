@@ -8,10 +8,14 @@ import {
 	GatheringListQuery,
 	LoginRequest,
 	PageResponse,
+	RestaurantCreateRequest,
+	RestaurantCreateResponse,
 	RestaurantDetail,
 	RestaurantListItem,
 	RestaurantListQuery,
 	RestaurantPatchRequest,
+	RestaurantRegionsResponse,
+	RestaurantSearchResponse,
 	CreateRestaurantSyncJobResponse,
 	GetRestaurantSyncJobResponse,
 } from "#/apis/admin/types";
@@ -54,6 +58,20 @@ export const localAdminService: AdminService = {
 		return withDelay(120, () => adminMockDb.getGatheringById(id));
 	},
 
+	searchRestaurants(keyword: string): Promise<RestaurantSearchResponse> {
+		return withDelay(130, () => adminMockDb.searchRestaurants(keyword));
+	},
+
+	createRestaurant(
+		request: RestaurantCreateRequest,
+	): Promise<RestaurantCreateResponse> {
+		return withDelay(160, () => adminMockDb.createRestaurant(request));
+	},
+
+	getRegions(): Promise<RestaurantRegionsResponse> {
+		return withDelay(130, () => adminMockDb.getRegions());
+	},
+
 	getRestaurants(
 		query: RestaurantListQuery,
 	): Promise<PageResponse<RestaurantListItem>> {
@@ -62,6 +80,10 @@ export const localAdminService: AdminService = {
 
 	getRestaurantById(id: number): Promise<RestaurantDetail | null> {
 		return withDelay(120, () => adminMockDb.getRestaurantById(id));
+	},
+
+	deleteRestaurant(id: number): Promise<void> {
+		return withDelay(140, () => adminMockDb.deleteRestaurant(id));
 	},
 
 	updateRestaurant(

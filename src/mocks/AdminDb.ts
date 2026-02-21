@@ -9,6 +9,9 @@ import {
 	GatheringListQuery,
 	LoginRequest,
 	PageResponse,
+	RestaurantCreateRequest,
+	RestaurantCreateResponse,
+	RestaurantSearchResponse,
 	ParticipantItem,
 	RestaurantDetail,
 	RestaurantListItem,
@@ -17,7 +20,12 @@ import {
 	CreateRestaurantSyncJobResponse,
 	GetRestaurantSyncJobResponse,
 } from "#/apis/admin/types";
-import { REGION_CODES } from "#/shared/constants";
+import type {
+	RestaurantRegion,
+	RestaurantRegionsResponse,
+	RestaurantSearchItem,
+} from "#/apis/restaurants";
+import { REGION_CODES, REGION_LABEL_BY_CODE } from "#/shared/constants";
 
 type InternalCategory = CategoryOption & {
 	largeCategory: string;
@@ -401,6 +409,74 @@ export const GATHERING_SEED: GatheringItem[] = [
 	},
 ];
 
+const RESTAURANT_SEARCH_SEED: RestaurantSearchItem[] = [
+	{
+		externalId: "1797997961",
+		placeName: "옥동식 서교점",
+		addressName: "서울 마포구 서교동 385-6",
+		roadAddressName: "서울 마포구 양화로7길 44-10",
+		category: "음식점 > 한식 > 곰탕",
+		x: "126.914521071507",
+		y: "37.5526765694055",
+	},
+	{
+		externalId: "995068389",
+		placeName: "옥동식 송파하남",
+		addressName: "경기 하남시 감일동 364",
+		roadAddressName: "경기 하남시 감일로 17",
+		category: "음식점 > 한식",
+		x: "127.143162454953",
+		y: "37.5077418714327",
+	},
+	{
+		externalId: "991434192",
+		placeName: "월하동",
+		addressName: "서울 종로구 관훈동 29",
+		roadAddressName: "서울 종로구 인사동8길 16-1",
+		category: "음식점 > 한식 > 곰탕",
+		x: "126.985978829845",
+		y: "37.5742197688186",
+	},
+	{
+		externalId: "20001001",
+		placeName: "옥동식 홍대점",
+		addressName: "서울 마포구 홍대입구 123-45",
+		roadAddressName: "서울 마포구 와우산로 23",
+		category: "음식점 > 한식 > 국수",
+		x: "126.924521071507",
+		y: "37.5556765694055",
+	},
+	{
+		externalId: "20001002",
+		placeName: "옥동식 강남점",
+		addressName: "서울 강남구 역삼동 12-34",
+		roadAddressName: "서울 강남구 강남대로 21",
+		category: "음식점 > 한식 > 냉면",
+		x: "127.0276",
+		y: "37.4979",
+	},
+	{
+		externalId: "20001003",
+		placeName: "옥동식 명동점",
+		addressName: "서울 중구 명동 1가 11-22",
+		roadAddressName: "서울 중구 명동길 88",
+		category: "음식점 > 한식 > 정식",
+		x: "126.985",
+		y: "37.563",
+	},
+];
+
+const RESTAURANT_REGION_SEED: RestaurantRegion[] = REGION_CODES.map(
+	(region) => ({
+		name: region,
+		displayName: REGION_LABEL_BY_CODE[region] ?? region,
+		coordinatesStandard: {
+			coordinates: [0, 0],
+			type: "Point",
+		},
+	}),
+);
+
 export const PARTICIPANT_SEED: ParticipantItem[] = [
 	{
 		id: 11,
@@ -648,6 +724,46 @@ const paginate = <T>(
 		hasNext: safePage < totalPages - 1,
 	};
 };
+
+const normalizeSearchKeyword = (keyword: string | undefined): string => {
+	const trimmed = keyword?.trim() ?? "";
+	return trimmed;
+};
+
+const toSearchItemsByKeyword = (
+	keyword: string,
+): RestaurantSearchItem[] => {
+	const normalizedKeyword = keyword.toLowerCase();
+	const filtered = RESTAURANT_SEARCH_SEED.filter((item) =>
+		[
+			item.placeName,
+			item.addressName,
+			item.roadAddressName,
+			item.category,
+			item.externalId,
+		]
+			.join(" ")
+			.toLowerCase()
+			.includes(normalizedKeyword),
+	);
+
+	return filtered.slice(0, 5);
+};
+
+const toRestaurantLocationFromSearchItem = (
+	searchItem: RestaurantSearchItem,
+): { coordinates: [number, number] } | null => {
+	const x = Number.parseFloat(searchItem.x);
+	const y = Number.parseFloat(searchItem.y);
+	if (!Number.isFinite(x) || !Number.isFinite(y)) {
+		return null;
+	}
+
+	return { coordinates: [x, y] };
+};
+
+const createRestaurantId = (restaurants: RestaurantDetail[]) =>
+	(restaurants.reduce((acc, restaurant) => Math.max(acc, restaurant.id), 0) || 0) + 1;
 
 const createRestaurantSyncJob = (
 	scope: GetRestaurantSyncJobResponse["scope"],
@@ -1010,6 +1126,100 @@ export const adminMockDb = {
 			(restaurant) => restaurant.id === id,
 		);
 		return found ? clone(found) : null;
+	},
+
+	searchRestaurants(keyword: string): RestaurantSearchResponse {
+		const normalized = normalizeSearchKeyword(keyword);
+		return {
+			keyword: normalized,
+			items: normalized.length > 0 ? toSearchItemsByKeyword(normalized) : [],
+		};
+	},
+
+	createRestaurant(
+		request: RestaurantCreateRequest,
+	): RestaurantCreateResponse {
+		const externalId = request.externalId.trim();
+		const region = request.region.trim();
+		if (!externalId || !region) {
+			throw new Error("externalId와 region은 필수입니다.");
+		}
+
+		const category = state.categories.find(
+			(category) => category.id === request.categoryId,
+		);
+		if (!category) {
+			throw new Error("유효하지 않은 categoryId입니다.");
+		}
+
+		const duplicate = state.restaurants.find(
+			(restaurant) => restaurant.externalId === externalId,
+		);
+		if (duplicate) {
+			return {
+				restaurantId: duplicate.id,
+				duplicated: true,
+			};
+		}
+
+		const matchedSearchItem = RESTAURANT_SEARCH_SEED.find(
+			(item) => item.externalId === externalId,
+		);
+		const location = matchedSearchItem
+			? toRestaurantLocationFromSearchItem(matchedSearchItem)
+			: null;
+		const now = nowIso();
+		const nextId = createRestaurantId(state.restaurants);
+		const created: RestaurantDetail = {
+			id: nextId,
+			externalId,
+			categoryId: request.categoryId,
+			name: matchedSearchItem?.placeName ?? `맛집 ${externalId}`,
+			address: matchedSearchItem?.addressName ?? "",
+			rating: null,
+			imageUrl:
+				"http://t1.daumcdn.net/local/placeholder.jpg",
+			mapUrl: `https://place.map.kakao.com/${externalId}`,
+			representativeReview: "",
+			description: request.description?.trim() ?? "",
+			region,
+			location: location ? { coordinates: location.coordinates } : null,
+			reviewCount: 0,
+			blogReviewCount: 0,
+			representMenu: "",
+			representMenuPrice: null,
+			priceLevel: "",
+			aiMateSummaryTitle: "",
+			aiMateSummaryContents: [],
+			timeSlot: "BOTH",
+			createdAt: now,
+			updatedAt: now,
+		};
+
+		state.restaurants = [created, ...state.restaurants];
+
+		return {
+			restaurantId: created.id,
+			duplicated: false,
+		};
+	},
+
+	deleteRestaurant(id: number): void {
+		const targetIndex = state.restaurants.findIndex(
+			(restaurant) => restaurant.id === id,
+		);
+		if (targetIndex < 0) {
+			throw new Error("해당 맛집을 찾을 수 없습니다.");
+		}
+
+		state.restaurants = [
+			...state.restaurants.slice(0, targetIndex),
+			...state.restaurants.slice(targetIndex + 1),
+		];
+	},
+
+	getRegions(): RestaurantRegionsResponse {
+		return { regions: clone(RESTAURANT_REGION_SEED) };
 	},
 
 	updateRestaurant(
