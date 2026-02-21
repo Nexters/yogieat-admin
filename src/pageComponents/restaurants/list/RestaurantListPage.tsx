@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { getAdminServiceMode } from "#/apis/admin";
 import {
@@ -13,19 +13,23 @@ import { AdminTopbar, Button, Toast } from "#/shared/ui";
 
 export function RestaurantListPage() {
 	const navigate = useNavigate();
+	const location = useLocation();
 	const { isAuthenticated, session, logout } = useAuth();
 
 	const {
 		applySearch,
 		errorMessage,
 		handleImageError,
+		handlePageInputChange,
 		handleLargeCategoryChange,
 		handlePageMove,
+		handlePageSubmit,
 		handleRegionChange,
 		handleSyncAll,
 		imageErrorById,
 		isLoading,
 		isSyncingAll,
+		pageInputText,
 		keywordInput,
 		largeCategoryOptions,
 		pageResponse,
@@ -92,13 +96,20 @@ export function RestaurantListPage() {
 					imageErrorById={imageErrorById}
 					isLoading={isLoading}
 					onNavigateDetail={(restaurantId) =>
-						navigate(`/restaurants/${restaurantId}`)
+						navigate(`/restaurants/${restaurantId}`, {
+							state: {
+								from: `${location.pathname}${location.search}`,
+							},
+						})
 					}
 					restaurants={pageResponse.content}
 				/>
 
 				<RestaurantPagination
+					pageInputText={pageInputText}
+					onPageInputChange={handlePageInputChange}
 					isLoading={isLoading}
+					onMoveToPage={handlePageSubmit}
 					onMovePage={handlePageMove}
 					page={query.page}
 					pageResponse={pageResponse}

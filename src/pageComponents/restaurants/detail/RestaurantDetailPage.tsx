@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { NotFoundPage } from "#/pageComponents/common";
 import { DetailImagePanel } from "#/pageComponents/restaurants/detail/components";
@@ -14,6 +14,7 @@ import { AdminTopbar, Button, Toast } from "#/shared/ui";
 
 export function RestaurantDetailPage() {
 	const navigate = useNavigate();
+	const location = useLocation();
 	const { restaurantId: restaurantIdParam } = useParams();
 	const restaurantId = Number(restaurantIdParam);
 	const hasValidId = Number.isFinite(restaurantId) && restaurantId > 0;
@@ -52,6 +53,9 @@ export function RestaurantDetailPage() {
 		hasValidId,
 		restaurantId,
 	});
+	const returnTo =
+		(location.state as { from?: string } | undefined)?.from ??
+		"/restaurants";
 
 	if (!hasValidId) {
 		return (
@@ -95,7 +99,7 @@ export function RestaurantDetailPage() {
 						<Button
 							variant="inverse"
 							size="sm"
-							onClick={() => navigate("/restaurants")}
+							onClick={() => navigate(returnTo)}
 						>
 							목록으로
 						</Button>

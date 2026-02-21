@@ -376,6 +376,32 @@
 	color: var(--color-text-secondary);
 }
 
+.admin-pagination__jump {
+	display: inline-flex;
+}
+
+.admin-pagination__jump-label {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+}
+
+.admin-pagination__jump-label input {
+	width: 52px;
+	height: 28px;
+	padding: 0 var(--space-1);
+	border: 1px solid var(--color-border-default);
+	border-radius: var(--radius-sm);
+	text-align: center;
+	font-size: var(--font-size-body-m);
+	color: var(--color-text-primary);
+}
+
+.admin-pagination__jump-label input:focus-visible {
+	outline: 2px solid var(--color-info-primary);
+	outline-offset: 0;
+}
+
 .admin-panel--detail {
 	gap: var(--space-5);
 }
