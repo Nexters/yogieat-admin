@@ -75,6 +75,7 @@ fi
 
 DOCKERHUB_NAMESPACE="${DOCKERHUB_NAMESPACE:-${DOCKERHUB_USERNAME}}"
 APP_IMAGE="${DOCKERHUB_NAMESPACE}/yogieat-admin:${ENV_LABEL}-${IMAGE_TAG}"
+COMPOSE_PROJECT_NAME="yogieat-admin-${ENV_LABEL}"
 
 mkdir -p "$APP_ROOT"
 mkdir -p "$PROJECT_ROOT"
@@ -95,6 +96,7 @@ fi
 
 APP_IMAGE="$APP_IMAGE" \
 APP_ENV_FILE="$RUNTIME_ENV_FILE" \
+COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_NAME" \
   docker compose -f docker/docker-compose.yml -f "$COMPOSE_FILE" up -d --pull always --remove-orphans
 
 docker image prune -f >/dev/null 2>&1 || true
