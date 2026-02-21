@@ -49,17 +49,18 @@ jobs:
 
             - name: Create deployment source archive
               run: |
-                  tar -czf deploy-source.tgz \
+                  tar -czf /tmp/deploy-source.tgz \
                     --exclude=.git \
                     --exclude=.github \
                     --exclude=node_modules \
                     --exclude=.pnpm-store \
                     --exclude=dist \
                     --exclude=build \
+                    --exclude=deploy-source.tgz \
                     .
 
             - name: Prepare deploy artifacts
-              run: mv deploy-source.tgz scripts/deploy/deploy-source.tgz
+              run: mv /tmp/deploy-source.tgz scripts/deploy/deploy-source.tgz
 
             - name: Copy deploy script to Server
               uses: burnett01/rsync-deployments@7.0.1
