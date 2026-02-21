@@ -16,12 +16,14 @@ case "$TARGET" in
     DEFAULT_ENV="develop"
     TARGET_ENV="develop"
     RUNTIME_ENV_DIR="dev"
+    TARGET_CONTAINER_NAME="yogieat-dev-admin"
     ;;
   main|admin)
     COMPOSE_FILE="docker/docker-compose.main.yml"
     DEFAULT_ENV="main"
     TARGET_ENV="main"
     RUNTIME_ENV_DIR="prod"
+    TARGET_CONTAINER_NAME="yogieat-admin-prod"
     ;;
   *)
     echo "Invalid target: $TARGET. Use dev/main or develop/admin." >&2
@@ -75,6 +77,12 @@ fi
 
 DOCKERHUB_NAMESPACE="${DOCKERHUB_NAMESPACE:-${DOCKERHUB_USERNAME}}"
 APP_IMAGE="${DOCKERHUB_NAMESPACE}/yogieat-admin:${ENV_LABEL}-${IMAGE_TAG}"
+COMPOSE_PROJECT_NAME="yogieat-admin-${ENV_LABEL}"
+COMPOSE_ARGS=(-p "$COMPOSE_PROJECT_NAME" -f docker/docker-compose.yml -f "$COMPOSE_FILE")
+if docker container inspect "$TARGET_CONTAINER_NAME" >/dev/null 2>&1; then
+  echo "Removing existing container before recreate: $TARGET_CONTAINER_NAME"
+  docker rm -f "$TARGET_CONTAINER_NAME"
+fi
 
 mkdir -p "$APP_ROOT"
 mkdir -p "$PROJECT_ROOT"
@@ -95,7 +103,15 @@ fi
 
 APP_IMAGE="$APP_IMAGE" \
 APP_ENV_FILE="$RUNTIME_ENV_FILE" \
-  docker compose -f docker/docker-compose.yml -f "$COMPOSE_FILE" up -d --pull always --remove-orphans
+COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_NAME" \
+  docker compose "${COMPOSE_ARGS[@]}" up -d --pull always --force-recreate --remove-orphans
+
+if ! docker ps --filter "name=$TARGET_CONTAINER_NAME" --filter "status=running" --format '{{.Names}}' | grep -q "^$TARGET_CONTAINER_NAME$"; then
+  echo "Deployment did not keep target container alive: $TARGET_CONTAINER_NAME" >&2
+  docker compose "${COMPOSE_ARGS[@]}" ps -a >&2
+  docker logs --tail=80 "$TARGET_CONTAINER_NAME" 2>&1 | sed -n '1,80p' >&2 || true
+  exit 1
+fi
 
 docker image prune -f >/dev/null 2>&1 || true
 
