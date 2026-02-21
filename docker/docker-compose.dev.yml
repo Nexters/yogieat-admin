@@ -1,0 +1,7 @@
+services:
+  yogieat-admin:
+    container_name: yogieat-dev-admin
+    env_file:
+      - ${APP_ENV_FILE}
+    ports:
+      - "127.0.0.1:3001:80"
