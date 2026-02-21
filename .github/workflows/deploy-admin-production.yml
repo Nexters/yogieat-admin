@@ -73,7 +73,7 @@ jobs:
             - name: Copy deploy script to Server
               uses: burnett01/rsync-deployments@7.0.1
               with:
-                  switches: -rlvz --delete --omit-dir-times --no-perms --no-owner --no-group
+                  switches: -rlvz --delete --omit-dir-times --no-owner --no-group
                   remote_host: ${{ secrets.SERVER_HOST }}
                   remote_user: ${{ secrets.SERVER_USERNAME }}
                   remote_key: ${{ secrets.SERVER_PRIVATE_KEY }}
@@ -88,7 +88,7 @@ jobs:
                   key: ${{ secrets.SERVER_PRIVATE_KEY }}
                   script: |
                       mv /tmp/yogieat-admin/deploy/deploy-source.tgz /tmp/yogieat-admin-source.tgz
-                      DOCKERHUB_NAMESPACE="${{ secrets.DOCKERHUB_USERNAME }}" /usr/local/bin/deploy-yogieat-admin.sh main ${{ steps.meta.outputs.short_sha }} main
+                      DOCKERHUB_NAMESPACE="${{ secrets.DOCKERHUB_USERNAME }}" bash /tmp/yogieat-admin/deploy/deploy-yogieat-admin.sh main ${{ steps.meta.outputs.short_sha }} main
 
             - name: Discord notification
               if: always()
