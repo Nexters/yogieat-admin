@@ -15,6 +15,6 @@ export const AUTH_ENDPOINT_CONTRACTS = {
 		method: "POST",
 		path: "/auth/refresh",
 		request: "RefreshTokenRequest",
-		response: "TokenBundle",
+		response: "RefreshTokenResponse",
 	},
 } as const;

@@ -56,7 +56,7 @@ REACT_APP_USE_MOCK_API=false
 
 - 로그인: `POST /api/v1/admin/auth/login`
 - 로그아웃: `POST /api/v1/admin/auth/logout`
-- 카테고리: `GET /api/v1/admin/sdui/categories`
+- 카테고리: `GET /api/v1/admin/categories`
 - 모임 목록: `GET /api/v1/admin/gatherings`
 - 모임 상세: `GET /api/v1/admin/gatherings/{id}`
 - 모임/참여자 대시보드: `GET /api/v1/admin/gatherings/dashboard`

@@ -2,6 +2,9 @@ import type { RestaurantListQuery } from "#/apis/restaurants/type";
 
 export const restaurantKeys = {
 	all: ["restaurants"] as const,
+	regions: () => [...restaurantKeys.all, "regions"] as const,
+	searches: () => [...restaurantKeys.all, "search"] as const,
+	search: (keyword: string) => [...restaurantKeys.searches(), { keyword }] as const,
 	categories: () => [...restaurantKeys.all, "categories"] as const,
 	lists: () => [...restaurantKeys.all, "list"] as const,
 	list: (query: RestaurantListQuery) =>

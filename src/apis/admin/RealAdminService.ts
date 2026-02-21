@@ -8,10 +8,14 @@ import {
 	GatheringListQuery,
 	LoginRequest,
 	PageResponse,
+	RestaurantCreateRequest,
+	RestaurantCreateResponse,
 	RestaurantDetail,
 	RestaurantListItem,
 	RestaurantListQuery,
 	RestaurantPatchRequest,
+	RestaurantRegionsResponse,
+	RestaurantSearchResponse,
 	CreateRestaurantSyncJobResponse,
 	GetRestaurantSyncJobResponse,
 	TokenBundle,
@@ -26,8 +30,7 @@ type RequestJsonOptions = Omit<RequestInit, "body" | "method" | "headers"> & {
 	method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 };
 
-type LoginPayload =
-	Record<string, unknown>;
+type LoginPayload = Record<string, unknown>;
 
 type RawTokenResponse = {
 	accessToken?: unknown;
@@ -79,7 +82,9 @@ const toTrimmedString = (value: unknown): string | undefined => {
 
 const toIsoDateString = (value: unknown): string | undefined => {
 	if (typeof value === "number") {
-		return Number.isFinite(value) ? new Date(value).toISOString() : undefined;
+		return Number.isFinite(value)
+			? new Date(value).toISOString()
+			: undefined;
 	}
 
 	if (typeof value === "string") {
@@ -94,7 +99,9 @@ const toIsoDateString = (value: unknown): string | undefined => {
 		}
 
 		const parsedDate = Date.parse(trimmed);
-		return Number.isNaN(parsedDate) ? undefined : new Date(parsedDate).toISOString();
+		return Number.isNaN(parsedDate)
+			? undefined
+			: new Date(parsedDate).toISOString();
 	}
 
 	return undefined;
@@ -121,9 +128,7 @@ const toPositiveFiniteNumber = (value: unknown): number | undefined => {
 	return undefined;
 };
 
-const resolveExpiresAt = (
-	payload: RawTokenResponse,
-): string | undefined => {
+const resolveExpiresAt = (payload: RawTokenResponse): string | undefined => {
 	const directExpiresAt = toIsoDateString(payload.expiresAt);
 	if (directExpiresAt) {
 		return directExpiresAt;
@@ -183,9 +188,7 @@ const normalizeTokenBundle = (payload: {
 	};
 };
 
-const extractTokenBundle = (
-	payload: Record<string, unknown>,
-): TokenBundle => {
+const extractTokenBundle = (payload: Record<string, unknown>): TokenBundle => {
 	if ("tokenBundle" in payload && isRecord(payload.tokenBundle)) {
 		return normalizeTokenBundle(payload.tokenBundle as RawTokenResponse);
 	}
@@ -270,7 +273,11 @@ const refreshAccessToken = async (): Promise<void> => {
 	);
 
 	const payload = response;
-	if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
+	if (
+		typeof payload !== "object" ||
+		payload === null ||
+		Array.isArray(payload)
+	) {
 		clearStoredSession();
 		throw new Error("토큰 갱신 응답 형식이 예상과 다릅니다.");
 	}
@@ -381,10 +388,14 @@ const buildGatheringListQuery = (query: GatheringListQuery): string => {
 
 const normalizeSession = (payload: LoginPayload): AdminSession => {
 	const tokenPayload = payload as RawTokenResponse;
-	const tokenBundle = extractTokenBundle(tokenPayload as Record<string, unknown>);
+	const tokenBundle = extractTokenBundle(
+		tokenPayload as Record<string, unknown>,
+	);
 	const rolesValue = tokenPayload.roles;
 	const roles = Array.isArray(rolesValue)
-		? rolesValue.filter((value): value is string => typeof value === "string")
+		? rolesValue.filter(
+				(value): value is string => typeof value === "string",
+			)
 		: undefined;
 
 	return {
@@ -393,9 +404,7 @@ const normalizeSession = (payload: LoginPayload): AdminSession => {
 				? tokenPayload.adminId
 				: "admin",
 		name:
-			typeof tokenPayload.name === "string"
-				? tokenPayload.name
-				: "Admin",
+			typeof tokenPayload.name === "string" ? tokenPayload.name : "Admin",
 		roles: roles && roles.length > 0 ? roles : ["ADMIN"],
 		tokenBundle,
 	};
@@ -421,6 +430,52 @@ const normalizeCategories = (
 			largeCategory: category.largeCategory,
 		};
 	});
+};
+
+const toCategoryArray = (
+	categories: CategoryOption[] | { categories?: unknown } | undefined,
+): CategoryOption[] => {
+	if (Array.isArray(categories)) {
+		return categories;
+	}
+
+	if (
+		categories &&
+		typeof categories === "object" &&
+		"categories" in categories
+	) {
+		const nested = categories.categories;
+		return Array.isArray(nested) ? nested : [];
+	}
+
+	return [];
+};
+
+const toRestaurantRegionsResponse = (
+	payload:
+		| RestaurantRegionsResponse
+		| { regions?: unknown }
+		| undefined,
+): RestaurantRegionsResponse => {
+	if (
+		payload &&
+		typeof payload === "object" &&
+		!Array.isArray(payload) &&
+		"regions" in payload
+	) {
+		const regionsValue = payload.regions;
+		return {
+			regions: Array.isArray(regionsValue) ? regionsValue : [],
+		};
+	}
+
+	return { regions: [] };
+};
+
+const buildRestaurantSearchQuery = (keyword: string): string => {
+	const search = new URLSearchParams();
+	search.set("keyword", keyword.trim());
+	return search.toString();
 };
 
 const getByIdPath = (id: number) => toAdminPath(`restaurants/${id}`);
@@ -450,12 +505,51 @@ export const realAdminService: AdminService = {
 	},
 
 	async getCategories(): Promise<CategoryOption[]> {
-		const response = await requestWithAutoRefresh<CategoryOption[]>(
-			toAdminPath("sdui/categories"),
+		const response = await requestWithAutoRefresh<
+			CategoryOption[] | { categories?: CategoryOption[] }
+		>(
+			toAdminPath("categories"),
 			{},
 		);
 
-		return normalizeCategories(response);
+		return normalizeCategories(toCategoryArray(response));
+	},
+
+	async searchRestaurants(
+		keyword: string,
+	): Promise<RestaurantSearchResponse> {
+		const trimmedKeyword = keyword.trim();
+		const response = await requestWithAutoRefresh<
+			RestaurantSearchResponse
+		>(`${toAdminPath("restaurants/search")}?${buildRestaurantSearchQuery(trimmedKeyword)}`, {
+			method: "GET",
+		});
+
+		return response;
+	},
+
+	async createRestaurant(
+		request: RestaurantCreateRequest,
+	): Promise<RestaurantCreateResponse> {
+		const response = await requestWithAutoRefresh<RestaurantCreateResponse>(
+			toAdminPath("restaurants"),
+			{
+				method: "POST",
+				body: request,
+			},
+		);
+
+		return response;
+	},
+
+	async getRegions(): Promise<RestaurantRegionsResponse> {
+		const response = await requestWithAutoRefresh<
+			RestaurantRegionsResponse | { regions?: unknown }
+		>(toAdminPath("regions"), {
+			method: "GET",
+		});
+
+		return toRestaurantRegionsResponse(response);
 	},
 
 	async getGatheringDashboard(): Promise<GatheringDashboardData> {
@@ -521,6 +615,12 @@ export const realAdminService: AdminService = {
 		}
 	},
 
+	async deleteRestaurant(id: number): Promise<void> {
+		await requestWithAutoRefresh<void>(getByIdPath(id), {
+			method: "DELETE",
+		});
+	},
+
 	async updateRestaurant(
 		id: number,
 		patch: RestaurantPatchRequest,
@@ -537,23 +637,25 @@ export const realAdminService: AdminService = {
 	},
 
 	async syncRestaurant(id: number): Promise<CreateRestaurantSyncJobResponse> {
-		const response = await requestWithAutoRefresh<CreateRestaurantSyncJobResponse>(
-			getRestaurantSyncSinglePath(id),
-			{
-				method: "POST",
-			},
-		);
+		const response =
+			await requestWithAutoRefresh<CreateRestaurantSyncJobResponse>(
+				getRestaurantSyncSinglePath(id),
+				{
+					method: "POST",
+				},
+			);
 
 		return response;
 	},
 
 	async syncAllRestaurants(): Promise<CreateRestaurantSyncJobResponse> {
-		const response = await requestWithAutoRefresh<CreateRestaurantSyncJobResponse>(
-			"restaurants/sync-jobs/all",
-			{
-				method: "POST",
-			},
-		);
+		const response =
+			await requestWithAutoRefresh<CreateRestaurantSyncJobResponse>(
+				"restaurants/sync-jobs/all",
+				{
+					method: "POST",
+				},
+			);
 
 		return response;
 	},
@@ -561,12 +663,13 @@ export const realAdminService: AdminService = {
 	async getSyncRestaurantJob(
 		jobId: number,
 	): Promise<GetRestaurantSyncJobResponse> {
-		const response = await requestWithAutoRefresh<GetRestaurantSyncJobResponse>(
-			getRestaurantSyncJobPath(jobId),
-			{
-				method: "GET",
-			},
-		);
+		const response =
+			await requestWithAutoRefresh<GetRestaurantSyncJobResponse>(
+				getRestaurantSyncJobPath(jobId),
+				{
+					method: "GET",
+				},
+			);
 
 		return response;
 	},
