@@ -29,6 +29,12 @@ case "$TARGET" in
     ;;
 esac
 
+if [ ! -w "$APP_ROOT" ]; then
+  APP_ROOT="/tmp/yogieat-admin"
+  PROJECT_ROOT="$APP_ROOT/source"
+fi
+
+mkdir -p "$APP_ROOT"
 ENV_LABEL="${3:-$DEFAULT_ENV}"
 
 if [ "$ENV_LABEL" != "develop" ] && [ "$ENV_LABEL" != "main" ]; then
@@ -43,15 +49,18 @@ fi
 
 RUNTIME_ENV_FILE="$APP_ROOT/${RUNTIME_ENV_DIR}/.env"
 if [ ! -f "$RUNTIME_ENV_FILE" ]; then
-  PROJECT_RUNTIME_ENV_FILE="$PROJECT_ROOT/${RUNTIME_ENV_DIR}.env"
-  if [ -f "$PROJECT_RUNTIME_ENV_FILE" ]; then
-    RUNTIME_ENV_FILE="$PROJECT_RUNTIME_ENV_FILE"
-  else
-    PROJECT_RUNTIME_ENV_FILE="$PROJECT_ROOT/${RUNTIME_ENV_DIR}/.env"
-    if [ -f "$PROJECT_RUNTIME_ENV_FILE" ]; then
-      RUNTIME_ENV_FILE="$PROJECT_RUNTIME_ENV_FILE"
+  for candidate in \
+    "/srv/yogieat-admin/${RUNTIME_ENV_DIR}/.env" \
+    "/tmp/yogieat-admin/${RUNTIME_ENV_DIR}.env" \
+    "/tmp/yogieat-admin/${RUNTIME_ENV_DIR}/.env" \
+    "$PROJECT_ROOT/${RUNTIME_ENV_DIR}.env" \
+    "$PROJECT_ROOT/${RUNTIME_ENV_DIR}/.env"
+  do
+    if [ -f "$candidate" ]; then
+      RUNTIME_ENV_FILE="$candidate"
+      break
     fi
-  fi
+  done
 fi
 
 if [ ! -f "$RUNTIME_ENV_FILE" ]; then
