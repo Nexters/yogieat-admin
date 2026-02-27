@@ -30,13 +30,18 @@ type UseRestaurantDetailPageParams = {
 	onRestaurantDeleted?: () => void;
 };
 
+const toCategoryMediumLabel = (category: CategoryOption): string => {
+	const raw = category.mediumCategory ?? category.name;
+	return typeof raw === "string" ? raw.trim() : "";
+};
+
 const toCategoryDisplayLabel = (category: CategoryOption | undefined) => {
 	if (!category) {
 		return undefined;
 	}
 
 	const largeCategory = category.largeCategory?.trim();
-	const mediumCategory = (category.mediumCategory ?? category.name ?? "").trim();
+	const mediumCategory = toCategoryMediumLabel(category);
 
 	if (largeCategory && mediumCategory) {
 		return `${largeCategory} / ${mediumCategory}`;
@@ -145,8 +150,7 @@ export function useRestaurantDetailPage({
 			const exactMatched = categories.find(
 				(category) =>
 					(category.largeCategory?.trim() ?? "") === largeCategory &&
-					(category.mediumCategory ?? category.name ?? "").trim() ===
-						mediumCategory,
+					toCategoryMediumLabel(category) === mediumCategory,
 			);
 			if (exactMatched) {
 				return exactMatched;
@@ -161,7 +165,7 @@ export function useRestaurantDetailPage({
 
 		if (mediumCategory) {
 			return categories.find(
-				(category) => (category.mediumCategory ?? category.name).trim() === mediumCategory,
+				(category) => toCategoryMediumLabel(category) === mediumCategory,
 			);
 		}
 
@@ -206,8 +210,8 @@ export function useRestaurantDetailPage({
 		return Array.from(grouped.entries()).map(([largeCategory, items]) => ({
 			largeCategory,
 			items: [...items].sort((a, b) =>
-				(a.mediumCategory ?? a.name).localeCompare(
-					b.mediumCategory ?? b.name,
+				toCategoryMediumLabel(a).localeCompare(
+					toCategoryMediumLabel(b),
 					"ko-KR",
 				),
 			),
@@ -234,9 +238,7 @@ export function useRestaurantDetailPage({
 		}
 
 		return items.filter((category) =>
-			(category.mediumCategory ?? category.name)
-				.toLowerCase()
-				.includes(keyword),
+			toCategoryMediumLabel(category).toLowerCase().includes(keyword),
 		);
 	}, [activeCategoryGroup?.items, categoryKeyword]);
 
