@@ -79,6 +79,26 @@ export function useGatheringDashboardPage() {
 		[refetchDashboard],
 	);
 
+	const recentGatherings = useMemo(() => {
+		if (!dashboardData) return [];
+		const twoWeeksAgo = new Date();
+		twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 13);
+		twoWeeksAgo.setHours(0, 0, 0, 0);
+		return dashboardData.gatherings.filter(
+			(g) => new Date(g.createdAt) >= twoWeeksAgo,
+		);
+	}, [dashboardData]);
+
+	const recentParticipants = useMemo(() => {
+		if (!dashboardData) return [];
+		const recentGatheringIds = new Set(recentGatherings.map((g) => g.id));
+		return dashboardData.participants.filter(
+			(p) =>
+				typeof p.gatheringId === "number" &&
+				recentGatheringIds.has(p.gatheringId),
+		);
+	}, [dashboardData, recentGatherings]);
+
 	const metrics = useMemo<DashboardMetrics>(() => {
 		if (!dashboardData) {
 			return {
@@ -91,10 +111,10 @@ export function useGatheringDashboardPage() {
 			};
 		}
 
-		const activeGatherings = dashboardData.gatherings.filter(
+		const activeGatherings = recentGatherings.filter(
 			(gathering) => !gathering.deletedAt,
 		);
-		const participantCountByGathering = dashboardData.participants.reduce(
+		const participantCountByGathering = recentParticipants.reduce(
 			(acc, participant) => {
 				if (typeof participant.gatheringId !== "number") {
 					return acc;
@@ -109,7 +129,7 @@ export function useGatheringDashboardPage() {
 			(sum, gathering) => sum + gathering.peopleCount,
 			0,
 		);
-		const linkedParticipants = dashboardData.participants.filter(
+		const linkedParticipants = recentParticipants.filter(
 			(participant) => typeof participant.gatheringId === "number",
 		).length;
 		const fillRate =
@@ -134,13 +154,13 @@ export function useGatheringDashboardPage() {
 
 		return {
 			activeGatherings: activeGatherings.length,
-			participants: dashboardData.participants.length,
+			participants: recentParticipants.length,
 			upcomingWithin14Days,
 			averageParticipantFill: fillRate,
 			averageTargetHeadcount,
 			participantCountByGathering,
 		};
-	}, [dashboardData]);
+	}, [dashboardData, recentGatherings, recentParticipants]);
 
 	const chapterData = useMemo<DashboardChapterData>(() => {
 		if (!dashboardData) {
@@ -154,22 +174,22 @@ export function useGatheringDashboardPage() {
 		}
 
 		const regionCounts = toCountEntries(
-			dashboardData.gatherings.map((gathering) =>
+			recentGatherings.map((gathering) =>
 				toRegionLabel(gathering.region),
 			),
 		);
 		const timeSlotCounts = toCountEntries(
-			dashboardData.gatherings.map((gathering) =>
+			recentGatherings.map((gathering) =>
 				toTimeSlotLabel(gathering.timeSlot),
 			),
 		);
 		const distanceCounts = toCountEntries(
-			dashboardData.participants.map(
+			recentParticipants.map(
 				(participant) => toDistanceRangeLabel(participant.distanceRange),
 			),
 		);
 		const preferenceCounts = toCountEntries(
-			dashboardData.participants.flatMap(
+			recentParticipants.flatMap(
 				(participant) =>
 					(participant.preferences ?? []).map((preference) =>
 						toLargeCategoryLabel(preference),
@@ -177,7 +197,7 @@ export function useGatheringDashboardPage() {
 			),
 		);
 		const dislikeCounts = toCountEntries(
-			dashboardData.participants.flatMap((participant) =>
+			recentParticipants.flatMap((participant) =>
 				(participant.dislikes ?? "")
 					.split(",")
 					.map((dislike) => dislike.trim())
@@ -193,21 +213,21 @@ export function useGatheringDashboardPage() {
 			preferenceCounts,
 			dislikeCounts,
 		};
-	}, [dashboardData]);
+	}, [dashboardData, recentGatherings, recentParticipants]);
 
 	const gatheringById = useMemo<GatheringById>(() => {
 		if (!dashboardData) {
 			return {};
 		}
 
-		return dashboardData.gatherings.reduce<GatheringById>(
+		return recentGatherings.reduce<GatheringById>(
 			(acc, gathering) => {
 				acc[gathering.id] = gathering;
 				return acc;
 			},
 			{},
 		);
-	}, [dashboardData]);
+	}, [recentGatherings]);
 
 	return {
 		activeChapter,
@@ -219,6 +239,7 @@ export function useGatheringDashboardPage() {
 		handleRefresh,
 		isLoading,
 		metrics,
+		recentGatherings,
 		scrollToChapter,
 		toastMessage,
 	};

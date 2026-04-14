@@ -30,6 +30,7 @@ export function GatheringDashboardPage() {
 		handleRefresh,
 		isLoading,
 		metrics,
+		recentGatherings,
 		scrollToChapter,
 		toastMessage,
 	} = useGatheringDashboardPage();
@@ -123,7 +124,7 @@ export function GatheringDashboardPage() {
 						sectionRef={getSectionRef("overview")}
 					/>
 					<ScheduleSection
-						gatherings={dashboardData.gatherings}
+						gatherings={recentGatherings}
 						participantCountByGathering={
 							metrics.participantCountByGathering
 						}

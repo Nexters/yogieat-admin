@@ -9,7 +9,7 @@ export const CHAPTERS: Chapter[] = [
 	},
 	{
 		id: "schedule",
-		label: "일정 트렌드",
+		label: "일정 트렌드 (최근 2주)",
 		description: "지역/시간대 기준으로 모임 패턴을 봅니다.",
 	},
 	{
