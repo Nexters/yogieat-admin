@@ -1,7 +1,10 @@
 import React from "react";
 
 import type { GatheringItem } from "#/apis/gatherings";
-import { CountBars } from "#/pageComponents/gatherings/dashboard/components";
+import {
+	CountBars,
+	DailyCreationChart,
+} from "#/pageComponents/gatherings/dashboard/components";
 import {
 	formatDate,
 	resolveGatheringLabel,
@@ -28,7 +31,11 @@ export function ScheduleSection({
 }: ScheduleSectionProps) {
 	return (
 		<section ref={sectionRef} className="admin-panel admin-insight-section">
-			<h2>일정 트렌드</h2>
+			<h2>일정 트렌드 (최근 2주)</h2>
+			<article className="admin-insight-card">
+				<h3>일별 모임 생성 추이 (최근 2주)</h3>
+				<DailyCreationChart gatherings={gatherings} />
+			</article>
 			<div className="admin-insight-grid">
 				<article className="admin-insight-card">
 					<h3>지역 분포</h3>
