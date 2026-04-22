@@ -88,6 +88,13 @@ export function GatheringDashboardPage() {
 							맛집 관리
 						</Button>
 						<Button
+							variant="inverse"
+							size="sm"
+							onClick={() => navigate("/regions")}
+						>
+							지역 관리
+						</Button>
+						<Button
 							variant="secondary"
 							size="sm"
 							onClick={() => handleRefresh(true)}

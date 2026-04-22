@@ -1,24 +1,28 @@
 import {
 	AdminSession,
 	CategoryOption,
+	CreateRestaurantSyncJobResponse,
 	DataIssue,
 	GatheringDetail,
 	GatheringDashboardData,
 	GatheringItem,
 	GatheringListItem,
 	GatheringListQuery,
+	GetRestaurantSyncJobResponse,
 	LoginRequest,
 	PageResponse,
+	ParticipantItem,
+	RegionCreateRequest,
+	RegionDetail,
+	RegionListResponse,
+	RegionPatchRequest,
 	RestaurantCreateRequest,
 	RestaurantCreateResponse,
-	RestaurantSearchResponse,
-	ParticipantItem,
 	RestaurantDetail,
 	RestaurantListItem,
 	RestaurantListQuery,
 	RestaurantPatchRequest,
-	CreateRestaurantSyncJobResponse,
-	GetRestaurantSyncJobResponse,
+	RestaurantSearchResponse,
 } from "#/apis/admin/types";
 import type {
 	RestaurantRegion,
@@ -466,16 +470,33 @@ const RESTAURANT_SEARCH_SEED: RestaurantSearchItem[] = [
 	},
 ];
 
-const RESTAURANT_REGION_SEED: RestaurantRegion[] = REGION_CODES.map(
-	(region) => ({
-		name: region,
-		displayName: REGION_LABEL_BY_CODE[region] ?? region,
-		coordinatesStandard: {
-			coordinates: [0, 0],
-			type: "Point",
-		},
-	}),
-);
+const REGION_COORDINATES_BY_CODE: Record<string, [number, number]> = {
+	EULJIRO3GA: [126.9919, 37.5663],
+	GANGNAM: [127.028, 37.4981],
+	GONGDEOK: [126.9522, 37.5445],
+	HONGDAE: [126.9236, 37.5572],
+	JAMSIL: [127.1027, 37.5133],
+	JONGNO3GA: [126.9917, 37.5703],
+	SADANG: [126.9816, 37.4766],
+	SAMGAKJI: [126.9722, 37.5347],
+};
+
+const INACTIVE_REGION_CODE_SET = new Set(["SADANG", "SAMGAKJI"]);
+
+const REGION_SEED: RegionDetail[] = REGION_CODES.map((regionCode, index) => ({
+	id: index + 1,
+	code: regionCode,
+	displayName: REGION_LABEL_BY_CODE[regionCode] ?? regionCode,
+	coordinatesStandard: {
+		coordinates: REGION_COORDINATES_BY_CODE[regionCode] ?? [0, 0],
+		type: "Point",
+	},
+	active: !INACTIVE_REGION_CODE_SET.has(regionCode),
+	sortOrder: index,
+	restaurantCount: RESTAURANT_SEED.filter(
+		(restaurant) => restaurant.region === regionCode,
+	).length,
+}));
 
 export const PARTICIPANT_SEED: ParticipantItem[] = [
 	{
@@ -609,6 +630,7 @@ type AdminMockState = {
 	categories: InternalCategory[];
 	gatherings: GatheringItem[];
 	participants: ParticipantItem[];
+	regions: RegionDetail[];
 	restaurants: RestaurantDetail[];
 	syncJobs: GetRestaurantSyncJobResponse[];
 	nextSyncJobId: number;
@@ -618,12 +640,150 @@ const createInitialState = (): AdminMockState => ({
 	categories: clone(CATEGORY_SEED),
 	gatherings: clone(GATHERING_SEED),
 	participants: clone(PARTICIPANT_SEED),
+	regions: clone(REGION_SEED),
 	restaurants: clone(RESTAURANT_SEED),
 	syncJobs: [],
 	nextSyncJobId: 1_000_000,
 });
 
 let state = createInitialState();
+
+const REGION_CODE_PATTERN = /^[A-Z0-9_]+$/;
+const MAX_REGION_CODE_LENGTH = 30;
+const MAX_REGION_DISPLAY_NAME_LENGTH = 255;
+
+const normalizeRegionCode = (value: string) => value.trim().toUpperCase();
+
+const countRestaurantsByRegionCode = (regionCode: string) =>
+	state.restaurants.filter((restaurant) => restaurant.region === regionCode)
+		.length;
+
+const sortRegions = (regions: RegionDetail[]) =>
+	clone(regions).sort((left, right) => {
+		if (left.sortOrder !== right.sortOrder) {
+			return left.sortOrder - right.sortOrder;
+		}
+
+		return left.displayName.localeCompare(right.displayName, "ko");
+	});
+
+const hydrateRegion = (region: RegionDetail): RegionDetail => ({
+	...clone(region),
+	restaurantCount: countRestaurantsByRegionCode(region.code),
+});
+
+const toRestaurantRegion = (region: RegionDetail): RestaurantRegion => ({
+	name: region.code,
+	displayName: region.displayName,
+	coordinatesStandard: {
+		coordinates: region.coordinatesStandard.coordinates,
+		type: "Point",
+	},
+});
+
+const validateRegionCoordinates = (
+	coordinatesStandard:
+		| RegionCreateRequest["coordinatesStandard"]
+		| RegionPatchRequest["coordinatesStandard"]
+		| undefined,
+) => {
+	if (!coordinatesStandard || !Array.isArray(coordinatesStandard.coordinates)) {
+		throw new Error("지역 좌표가 올바르지 않습니다.");
+	}
+
+	const [longitude, latitude] = coordinatesStandard.coordinates;
+	if (
+		typeof longitude !== "number" ||
+		typeof latitude !== "number" ||
+		!Number.isFinite(longitude) ||
+		!Number.isFinite(latitude) ||
+		longitude < -180 ||
+		longitude > 180 ||
+		latitude < -90 ||
+		latitude > 90
+	) {
+		throw new Error("지역 좌표가 올바르지 않습니다.");
+	}
+};
+
+const validateRegionCode = (
+	code: string,
+	currentRegionId?: number,
+) => {
+	if (!code) {
+		throw new Error("지역 코드는 필수입니다.");
+	}
+
+	if (
+		code.length > MAX_REGION_CODE_LENGTH ||
+		!REGION_CODE_PATTERN.test(code)
+	) {
+		throw new Error(
+			"지역 코드는 대문자, 숫자, 언더스코어만 사용할 수 있습니다.",
+		);
+	}
+
+	const hasDuplicateCode = state.regions.some(
+		(region) =>
+			region.id !== currentRegionId && region.code === code,
+	);
+	if (hasDuplicateCode) {
+		throw new Error("이미 존재하는 지역 코드입니다.");
+	}
+};
+
+const validateRegionDisplayName = (
+	displayName: string,
+	currentRegionId?: number,
+) => {
+	if (!displayName) {
+		throw new Error("지역명은 필수입니다.");
+	}
+
+	if (displayName.length > MAX_REGION_DISPLAY_NAME_LENGTH) {
+		throw new Error(
+			`지역명은 최대 ${MAX_REGION_DISPLAY_NAME_LENGTH}자까지 가능합니다.`,
+		);
+	}
+
+	const hasDuplicateDisplayName = state.regions.some(
+		(region) =>
+			region.id !== currentRegionId &&
+			region.displayName === displayName,
+	);
+	if (hasDuplicateDisplayName) {
+		throw new Error("이미 존재하는 지역명입니다.");
+	}
+};
+
+const validateRegionSortOrder = (sortOrder: number | undefined) => {
+	if (
+		typeof sortOrder === "number" &&
+		(!Number.isInteger(sortOrder) || sortOrder < 0)
+	) {
+		throw new Error("sortOrder는 0 이상이어야 합니다.");
+	}
+};
+
+const buildRegionSummary = (region: RegionDetail): RegionDetail => {
+	return hydrateRegion(region);
+};
+
+const getNextRegionId = () => {
+	return (
+		state.regions.reduce((maxId, region) => Math.max(maxId, region.id), 0) +
+		1
+	);
+};
+
+const getNextRegionSortOrder = () => {
+	return (
+		state.regions.reduce(
+			(maxSortOrder, region) => Math.max(maxSortOrder, region.sortOrder),
+			-1,
+		) + 1
+	);
+};
 
 const toListItem = (restaurant: RestaurantDetail): RestaurantListItem => ({
 	id: restaurant.id,
@@ -1140,7 +1300,7 @@ export const adminMockDb = {
 		request: RestaurantCreateRequest,
 	): RestaurantCreateResponse {
 		const externalId = request.externalId.trim();
-		const region = request.region.trim();
+		const region = normalizeRegionCode(request.region);
 		if (!externalId || !region) {
 			throw new Error("externalId와 region은 필수입니다.");
 		}
@@ -1150,6 +1310,13 @@ export const adminMockDb = {
 		);
 		if (!category) {
 			throw new Error("유효하지 않은 categoryId입니다.");
+		}
+
+		const foundRegion = state.regions.find(
+			(regionItem) => regionItem.code === region,
+		);
+		if (!foundRegion) {
+			throw new Error("유효하지 않은 지역 코드입니다.");
 		}
 
 		const duplicate = state.restaurants.find(
@@ -1219,7 +1386,138 @@ export const adminMockDb = {
 	},
 
 	getRegions(): RestaurantRegionsResponse {
-		return { regions: clone(RESTAURANT_REGION_SEED) };
+		return {
+			regions: sortRegions(state.regions).map((region) =>
+				toRestaurantRegion(buildRegionSummary(region)),
+			),
+		};
+	},
+
+	getRegionSummaries(): RegionListResponse {
+		return {
+			regions: sortRegions(state.regions).map((region) =>
+				buildRegionSummary(region),
+			),
+		};
+	},
+
+	getRegionById(id: number): RegionDetail | null {
+		const found = state.regions.find((region) => region.id === id);
+		return found ? buildRegionSummary(found) : null;
+	},
+
+	createRegion(request: RegionCreateRequest): RegionDetail {
+		const code = normalizeRegionCode(request.code ?? "");
+		const displayName = request.displayName?.trim() ?? "";
+		const sortOrder =
+			typeof request.sortOrder === "number"
+				? request.sortOrder
+				: getNextRegionSortOrder();
+
+		validateRegionCode(code);
+		validateRegionDisplayName(displayName);
+		validateRegionCoordinates(request.coordinatesStandard);
+		validateRegionSortOrder(sortOrder);
+
+		const created: RegionDetail = {
+			id: getNextRegionId(),
+			code,
+			displayName,
+			coordinatesStandard: {
+				coordinates: [
+					request.coordinatesStandard.coordinates[0],
+					request.coordinatesStandard.coordinates[1],
+				],
+				type: "Point",
+			},
+			active: request.active ?? true,
+			sortOrder,
+			restaurantCount: 0,
+		};
+
+		state.regions = [...state.regions, created];
+		return buildRegionSummary(created);
+	},
+
+	updateRegion(id: number, patch: RegionPatchRequest): RegionDetail {
+		const targetIndex = state.regions.findIndex((region) => region.id === id);
+		if (targetIndex < 0) {
+			throw new Error("지역 정보를 찾을 수 없습니다.");
+		}
+
+		const currentRegion = state.regions[targetIndex];
+		const nextCode =
+			typeof patch.code === "string"
+				? normalizeRegionCode(patch.code)
+				: currentRegion.code;
+		const nextDisplayName =
+			typeof patch.displayName === "string"
+				? patch.displayName.trim()
+				: currentRegion.displayName;
+		const nextSortOrder =
+			typeof patch.sortOrder === "number"
+				? patch.sortOrder
+				: currentRegion.sortOrder;
+
+		validateRegionCode(nextCode, id);
+		validateRegionDisplayName(nextDisplayName, id);
+		validateRegionSortOrder(nextSortOrder);
+		if (patch.coordinatesStandard) {
+			validateRegionCoordinates(patch.coordinatesStandard);
+		}
+
+		const updated: RegionDetail = {
+			...currentRegion,
+			code: nextCode,
+			displayName: nextDisplayName,
+			coordinatesStandard: patch.coordinatesStandard
+				? {
+						coordinates: [
+							patch.coordinatesStandard.coordinates[0],
+							patch.coordinatesStandard.coordinates[1],
+						],
+						type: "Point",
+					}
+				: currentRegion.coordinatesStandard,
+			active:
+				typeof patch.active === "boolean"
+					? patch.active
+					: currentRegion.active,
+			sortOrder: nextSortOrder,
+		};
+
+		state.regions[targetIndex] = updated;
+
+		if (currentRegion.code !== updated.code) {
+			state.restaurants = state.restaurants.map((restaurant) =>
+				restaurant.region === currentRegion.code
+					? {
+							...restaurant,
+							region: updated.code,
+							updatedAt: nowIso(),
+						}
+					: restaurant,
+			);
+		}
+
+		return buildRegionSummary(updated);
+	},
+
+	deleteRegion(id: number): void {
+		const targetIndex = state.regions.findIndex((region) => region.id === id);
+		if (targetIndex < 0) {
+			throw new Error("삭제할 지역 정보를 찾을 수 없습니다.");
+		}
+
+		const target = state.regions[targetIndex];
+		if (countRestaurantsByRegionCode(target.code) > 0) {
+			throw new Error("맛집이 연결된 지역은 삭제할 수 없습니다.");
+		}
+
+		state.regions = [
+			...state.regions.slice(0, targetIndex),
+			...state.regions.slice(targetIndex + 1),
+		];
 	},
 
 	updateRestaurant(

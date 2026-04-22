@@ -2,12 +2,18 @@ import {
 	AdminService,
 	AdminSession,
 	CategoryOption,
+	CreateRestaurantSyncJobResponse,
 	GatheringDetail,
 	GatheringDashboardData,
 	GatheringListItem,
 	GatheringListQuery,
+	GetRestaurantSyncJobResponse,
 	LoginRequest,
 	PageResponse,
+	RegionCreateRequest,
+	RegionDetail,
+	RegionListResponse,
+	RegionPatchRequest,
 	RestaurantCreateRequest,
 	RestaurantCreateResponse,
 	RestaurantDetail,
@@ -16,8 +22,6 @@ import {
 	RestaurantPatchRequest,
 	RestaurantRegionsResponse,
 	RestaurantSearchResponse,
-	CreateRestaurantSyncJobResponse,
-	GetRestaurantSyncJobResponse,
 } from "#/apis/admin/types";
 import { adminMockDb } from "#/mocks/AdminDb";
 
@@ -70,6 +74,29 @@ export const localAdminService: AdminService = {
 
 	getRegions(): Promise<RestaurantRegionsResponse> {
 		return withDelay(130, () => adminMockDb.getRegions());
+	},
+
+	getRegionSummaries(): Promise<RegionListResponse> {
+		return withDelay(130, () => adminMockDb.getRegionSummaries());
+	},
+
+	getRegionById(id: number): Promise<RegionDetail | null> {
+		return withDelay(120, () => adminMockDb.getRegionById(id));
+	},
+
+	createRegion(request: RegionCreateRequest): Promise<RegionDetail> {
+		return withDelay(180, () => adminMockDb.createRegion(request));
+	},
+
+	updateRegion(
+		id: number,
+		patch: RegionPatchRequest,
+	): Promise<RegionDetail> {
+		return withDelay(180, () => adminMockDb.updateRegion(id, patch));
+	},
+
+	deleteRegion(id: number): Promise<void> {
+		return withDelay(140, () => adminMockDb.deleteRegion(id));
 	},
 
 	getRestaurants(

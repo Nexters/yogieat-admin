@@ -8,6 +8,7 @@ import {
 	GatheringDetailPage,
 	GatheringListPage,
 	LoginPage,
+	RegionDashboardPage,
 	RestaurantDetailPage,
 	RestaurantListPage,
 } from "#/pageComponents";
@@ -73,6 +74,14 @@ export function AppRoutes() {
 					element={
 						<RequireAuth>
 							<RestaurantDetailPage />
+						</RequireAuth>
+					}
+				/>
+				<Route
+					path="/regions"
+					element={
+						<RequireAuth>
+							<RegionDashboardPage />
 						</RequireAuth>
 					}
 				/>
