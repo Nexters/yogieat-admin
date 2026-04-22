@@ -198,6 +198,13 @@ export function RestaurantDetailPage() {
 						>
 							모임 관리
 						</Button>
+						<Button
+							variant="inverse"
+							size="sm"
+							onClick={() => navigate("/regions")}
+						>
+							지역 관리
+						</Button>
 						{isEditMode ? (
 							<>
 								<Button

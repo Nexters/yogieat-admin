@@ -115,9 +115,15 @@ const persistSession = (session: AdminSession | null) => {
 	window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 };
 
+const readInitialSession = (): AdminSession | null => {
+	const storedSession = readStoredSession();
+	setAdminServiceMode(inferAdminServiceMode(storedSession));
+	return storedSession;
+};
+
 export function AuthProvider({ children }: PropsWithChildren) {
 	const [session, setSession] = useState<AdminSession | null>(() =>
-		readStoredSession(),
+		readInitialSession(),
 	);
 
 	useEffect(() => {

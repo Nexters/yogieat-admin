@@ -12,6 +12,12 @@ import type {
 	ParticipantRole,
 } from "#/apis/gatherings";
 import type {
+	RegionCreateRequest,
+	RegionDetail,
+	RegionListResponse,
+	RegionPatchRequest,
+} from "#/apis/regions";
+import type {
 	PageResponse,
 	RestaurantDetail,
 	CategoryOption,
@@ -44,6 +50,10 @@ export type {
 	ParticipantDistanceRange,
 	ParticipantItem,
 	ParticipantRole,
+	RegionCreateRequest,
+	RegionDetail,
+	RegionListResponse,
+	RegionPatchRequest,
 	RestaurantDetail,
 	RestaurantListItem,
 	RestaurantListQuery,
@@ -68,6 +78,14 @@ export type AdminService = {
 		request: RestaurantCreateRequest,
 	) => Promise<RestaurantCreateResponse>;
 	getRegions: () => Promise<RestaurantRegionsResponse>;
+	getRegionSummaries: () => Promise<RegionListResponse>;
+	getRegionById: (id: number) => Promise<RegionDetail | null>;
+	createRegion: (request: RegionCreateRequest) => Promise<RegionDetail>;
+	updateRegion: (
+		id: number,
+		patch: RegionPatchRequest,
+	) => Promise<RegionDetail>;
+	deleteRegion: (id: number) => Promise<void>;
 	getCategories: () => Promise<CategoryOption[]>;
 	getGatheringDashboard: () => Promise<GatheringDashboardData>;
 	getGatherings: (

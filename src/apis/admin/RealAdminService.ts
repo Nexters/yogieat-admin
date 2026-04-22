@@ -2,12 +2,18 @@ import {
 	AdminService,
 	AdminSession,
 	CategoryOption,
+	CreateRestaurantSyncJobResponse,
 	GatheringDetail,
 	GatheringDashboardData,
 	GatheringListItem,
 	GatheringListQuery,
+	GetRestaurantSyncJobResponse,
 	LoginRequest,
 	PageResponse,
+	RegionCreateRequest,
+	RegionDetail,
+	RegionListResponse,
+	RegionPatchRequest,
 	RestaurantCreateRequest,
 	RestaurantCreateResponse,
 	RestaurantDetail,
@@ -16,8 +22,6 @@ import {
 	RestaurantPatchRequest,
 	RestaurantRegionsResponse,
 	RestaurantSearchResponse,
-	CreateRestaurantSyncJobResponse,
-	GetRestaurantSyncJobResponse,
 	TokenBundle,
 } from "#/apis/admin/types";
 import { ApiError, requestJson } from "#/shared/config";
@@ -31,6 +35,15 @@ type RequestJsonOptions = Omit<RequestInit, "body" | "method" | "headers"> & {
 };
 
 type LoginPayload = Record<string, unknown>;
+type RawRegionResponse = {
+	active?: unknown;
+	coordinatesStandard?: unknown;
+	displayName?: unknown;
+	id?: unknown;
+	name?: unknown;
+	restaurantCount?: unknown;
+	sortOrder?: unknown;
+};
 
 type RawTokenResponse = {
 	accessToken?: unknown;
@@ -123,6 +136,42 @@ const toPositiveFiniteNumber = (value: unknown): number | undefined => {
 
 		const parsed = Number(trimmed);
 		return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+	}
+
+	return undefined;
+};
+
+const toFiniteNumber = (value: unknown): number | undefined => {
+	if (typeof value === "number") {
+		return Number.isFinite(value) ? value : undefined;
+	}
+
+	if (typeof value === "string") {
+		const trimmed = value.trim();
+		if (!trimmed) {
+			return undefined;
+		}
+
+		const parsed = Number(trimmed);
+		return Number.isFinite(parsed) ? parsed : undefined;
+	}
+
+	return undefined;
+};
+
+const toBoolean = (value: unknown): boolean | undefined => {
+	if (typeof value === "boolean") {
+		return value;
+	}
+
+	if (typeof value === "string") {
+		const normalized = value.trim().toLowerCase();
+		if (normalized === "true") {
+			return true;
+		}
+		if (normalized === "false") {
+			return false;
+		}
 	}
 
 	return undefined;
@@ -451,12 +500,82 @@ const toCategoryArray = (
 	return [];
 };
 
-const toRestaurantRegionsResponse = (
+const toRegionCoordinates = (
+	value: unknown,
+): RegionDetail["coordinatesStandard"] => {
+	if (
+		value &&
+		typeof value === "object" &&
+		!Array.isArray(value) &&
+		"coordinates" in value &&
+		Array.isArray(value.coordinates) &&
+		value.coordinates.length >= 2
+	) {
+		const longitude = toFiniteNumber(value.coordinates[0]);
+		const latitude = toFiniteNumber(value.coordinates[1]);
+
+		if (
+			typeof longitude === "number" &&
+			typeof latitude === "number"
+		) {
+			return {
+				coordinates: [longitude, latitude],
+				type:
+					typeof (value as { type?: unknown }).type === "string"
+						? ((value as { type?: string }).type ?? "Point")
+						: "Point",
+			};
+		}
+	}
+
+	return {
+		coordinates: [0, 0],
+		type: "Point",
+	};
+};
+
+const normalizeRegionItem = (value: unknown): RegionDetail | null => {
+	if (
+		!value ||
+		typeof value !== "object" ||
+		Array.isArray(value)
+	) {
+		return null;
+	}
+
+	const raw = value as RawRegionResponse;
+	const id = toPositiveFiniteNumber(raw.id);
+	const code = toTrimmedString(raw.name);
+	const displayName = toTrimmedString(raw.displayName);
+
+	if (
+		typeof id !== "number" ||
+		!code ||
+		!displayName
+	) {
+		return null;
+	}
+
+	return {
+		id,
+		code,
+		displayName,
+		coordinatesStandard: toRegionCoordinates(raw.coordinatesStandard),
+		active: toBoolean(raw.active) ?? false,
+		sortOrder: Math.max(0, Math.trunc(toFiniteNumber(raw.sortOrder) ?? 0)),
+		restaurantCount: Math.max(
+			0,
+			Math.trunc(toFiniteNumber(raw.restaurantCount) ?? 0),
+		),
+	};
+};
+
+const toRegionListResponse = (
 	payload:
-		| RestaurantRegionsResponse
+		| RegionListResponse
 		| { regions?: unknown }
 		| undefined,
-): RestaurantRegionsResponse => {
+): RegionListResponse => {
 	if (
 		payload &&
 		typeof payload === "object" &&
@@ -465,11 +584,50 @@ const toRestaurantRegionsResponse = (
 	) {
 		const regionsValue = payload.regions;
 		return {
-			regions: Array.isArray(regionsValue) ? regionsValue : [],
+			regions: Array.isArray(regionsValue)
+				? regionsValue
+						.map((region) => normalizeRegionItem(region))
+						.filter(
+							(region): region is RegionDetail => region !== null,
+						)
+				: [],
 		};
 	}
 
 	return { regions: [] };
+};
+
+const toRegionDetail = (
+	payload:
+		| RegionDetail
+		| { region?: unknown }
+		| undefined,
+): RegionDetail | null => {
+	if (
+		payload &&
+		typeof payload === "object" &&
+		!Array.isArray(payload) &&
+		"region" in payload
+	) {
+		return normalizeRegionItem(payload.region);
+	}
+
+	return normalizeRegionItem(payload);
+};
+
+const toRestaurantRegionsResponseFromRegionList = (
+	response: RegionListResponse,
+): RestaurantRegionsResponse => {
+	return {
+		regions: response.regions.map((region) => ({
+			name: region.code,
+			displayName: region.displayName,
+			coordinatesStandard: {
+				coordinates: region.coordinatesStandard.coordinates,
+				type: "Point" as const,
+			},
+		})),
+	};
 };
 
 const buildRestaurantSearchQuery = (keyword: string): string => {
@@ -480,10 +638,21 @@ const buildRestaurantSearchQuery = (keyword: string): string => {
 
 const getByIdPath = (id: number) => toAdminPath(`restaurants/${id}`);
 const getGatheringByIdPath = (id: number) => toAdminPath(`gatherings/${id}`);
+const getRegionByIdPath = (id: number) => toAdminPath(`regions/${id}`);
 const getRestaurantSyncJobPath = (jobId: number) =>
 	`restaurants/sync-jobs/${jobId}`;
 const getRestaurantSyncSinglePath = (restaurantId: number) =>
 	`restaurants/${restaurantId}/sync-jobs`;
+
+const fetchRegionList = async (): Promise<RegionListResponse> => {
+	const response = await requestWithAutoRefresh<
+		RegionListResponse | { regions?: unknown }
+	>(toAdminPath("regions"), {
+		method: "GET",
+	});
+
+	return toRegionListResponse(response);
+};
 
 export const realAdminService: AdminService = {
 	async login(request: LoginRequest): Promise<AdminSession> {
@@ -543,13 +712,69 @@ export const realAdminService: AdminService = {
 	},
 
 	async getRegions(): Promise<RestaurantRegionsResponse> {
-		const response = await requestWithAutoRefresh<
-			RestaurantRegionsResponse | { regions?: unknown }
-		>(toAdminPath("regions"), {
-			method: "GET",
-		});
+		return toRestaurantRegionsResponseFromRegionList(
+			await fetchRegionList(),
+		);
+	},
 
-		return toRestaurantRegionsResponse(response);
+	async getRegionSummaries(): Promise<RegionListResponse> {
+		return fetchRegionList();
+	},
+
+	async getRegionById(id: number): Promise<RegionDetail | null> {
+		try {
+			const response = await requestWithAutoRefresh<
+				RegionDetail | { region?: unknown }
+			>(getRegionByIdPath(id), {
+				method: "GET",
+			});
+			return toRegionDetail(response);
+		} catch (error) {
+			if (error instanceof ApiError && error.status === 404) {
+				return null;
+			}
+
+			throw error;
+		}
+	},
+
+	async createRegion(request: RegionCreateRequest): Promise<RegionDetail> {
+		const response = await requestWithAutoRefresh<
+			RegionDetail | { region?: unknown }
+		>(toAdminPath("regions"), {
+			method: "POST",
+			body: request,
+		});
+		const normalized = toRegionDetail(response);
+		if (!normalized) {
+			throw new Error("지역 생성 응답 형식이 예상과 다릅니다.");
+		}
+
+		return normalized;
+	},
+
+	async updateRegion(
+		id: number,
+		patch: RegionPatchRequest,
+	): Promise<RegionDetail> {
+		const response = await requestWithAutoRefresh<
+			RegionDetail | { region?: unknown }
+		>(getRegionByIdPath(id), {
+			method: "PATCH",
+			body: patch,
+		});
+		const normalized = toRegionDetail(response);
+		if (!normalized) {
+			throw new Error("지역 수정 응답 형식이 예상과 다릅니다.");
+		}
+
+		return normalized;
+	},
+
+	async deleteRegion(id: number): Promise<void> {
+		await requestWithAutoRefresh<void>(getRegionByIdPath(id), {
+			method: "DELETE",
+		});
 	},
 
 	async getGatheringDashboard(): Promise<GatheringDashboardData> {
