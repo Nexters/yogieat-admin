@@ -7,6 +7,51 @@ export const ADMIN_API_MODE = APP_ENV.USE_MOCK_API ? "mock" : "real";
 
 type AdminApiMode = "mock" | "real";
 
+const ACCESS_TOKEN_KEY = "admin_access_token";
+const SESSION_KEY = "admin_session";
+
+const isBrowser = () => typeof window !== "undefined";
+
+const readStoredAccessToken = (): string | null => {
+	if (!isBrowser()) {
+		return null;
+	}
+
+	const accessToken = window.localStorage
+		.getItem(ACCESS_TOKEN_KEY)
+		?.trim();
+	if (accessToken) {
+		return accessToken;
+	}
+
+	const rawSession = window.localStorage.getItem(SESSION_KEY);
+	if (!rawSession) {
+		return null;
+	}
+
+	try {
+		const parsed = JSON.parse(rawSession) as {
+			tokenBundle?: { accessToken?: unknown };
+		};
+		const sessionAccessToken = parsed.tokenBundle?.accessToken;
+		return typeof sessionAccessToken === "string" &&
+			sessionAccessToken.trim()
+			? sessionAccessToken.trim()
+			: null;
+	} catch {
+		return null;
+	}
+};
+
+const inferStoredAdminServiceMode = (): AdminApiMode | null => {
+	const accessToken = readStoredAccessToken();
+	if (!accessToken) {
+		return null;
+	}
+
+	return accessToken.startsWith("mock-") ? "mock" : "real";
+};
+
 const resolveAdminService = (mode: AdminApiMode): AdminService => {
 	if (mode === "mock") {
 		return localAdminService;
@@ -19,7 +64,8 @@ const resolveAdminService = (mode: AdminApiMode): AdminService => {
 	return realAdminService;
 };
 
-const resolveInitialMode = (): AdminApiMode => ADMIN_API_MODE;
+const resolveInitialMode = (): AdminApiMode =>
+	inferStoredAdminServiceMode() ?? ADMIN_API_MODE;
 let currentMode = resolveInitialMode();
 export let adminService: AdminService = resolveAdminService(currentMode);
 
