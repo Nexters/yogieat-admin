@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { regionQueryOptions } from "#/apis/regions";
+import { regionQueryOptions, type RegionListQuery } from "#/apis/regions";
 
-export const useGetRegionSummaries = () => {
-	return useQuery(regionQueryOptions.list());
+export const useGetRegionSummaries = (query?: RegionListQuery) => {
+	return useQuery(regionQueryOptions.list(query));
 };

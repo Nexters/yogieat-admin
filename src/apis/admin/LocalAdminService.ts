@@ -13,6 +13,7 @@ import {
 	RegionCreateRequest,
 	RegionDetail,
 	RegionListResponse,
+	RegionListQuery,
 	RegionPatchRequest,
 	RestaurantCreateRequest,
 	RestaurantCreateResponse,
@@ -76,8 +77,8 @@ export const localAdminService: AdminService = {
 		return withDelay(130, () => adminMockDb.getRegions());
 	},
 
-	getRegionSummaries(): Promise<RegionListResponse> {
-		return withDelay(130, () => adminMockDb.getRegionSummaries());
+	getRegionSummaries(query?: RegionListQuery): Promise<RegionListResponse> {
+		return withDelay(130, () => adminMockDb.getRegionSummaries(query));
 	},
 
 	getRegionById(id: number): Promise<RegionDetail | null> {
@@ -88,10 +89,7 @@ export const localAdminService: AdminService = {
 		return withDelay(180, () => adminMockDb.createRegion(request));
 	},
 
-	updateRegion(
-		id: number,
-		patch: RegionPatchRequest,
-	): Promise<RegionDetail> {
+	updateRegion(id: number, patch: RegionPatchRequest): Promise<RegionDetail> {
 		return withDelay(180, () => adminMockDb.updateRegion(id, patch));
 	},
 
@@ -128,9 +126,7 @@ export const localAdminService: AdminService = {
 		return withDelay(420, () => adminMockDb.syncAllRestaurants());
 	},
 
-	getSyncRestaurantJob(
-		jobId: number,
-	): Promise<GetRestaurantSyncJobResponse> {
+	getSyncRestaurantJob(jobId: number): Promise<GetRestaurantSyncJobResponse> {
 		return withDelay(180, () => adminMockDb.getSyncRestaurantJob(jobId));
 	},
 };

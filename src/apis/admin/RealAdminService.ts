@@ -13,6 +13,7 @@ import {
 	RegionCreateRequest,
 	RegionDetail,
 	RegionListResponse,
+	RegionListQuery,
 	RegionPatchRequest,
 	RestaurantCreateRequest,
 	RestaurantCreateResponse,
@@ -37,12 +38,20 @@ type RequestJsonOptions = Omit<RequestInit, "body" | "method" | "headers"> & {
 type LoginPayload = Record<string, unknown>;
 type RawRegionResponse = {
 	active?: unknown;
+	code?: unknown;
 	coordinatesStandard?: unknown;
 	displayName?: unknown;
+	display_name?: unknown;
 	id?: unknown;
+	is_active?: unknown;
+	latitude?: unknown;
+	longitude?: unknown;
 	name?: unknown;
+	province?: unknown;
 	restaurantCount?: unknown;
+	restaurant_count?: unknown;
 	sortOrder?: unknown;
+	sort_order?: unknown;
 };
 
 type RawTokenResponse = {
@@ -514,10 +523,7 @@ const toRegionCoordinates = (
 		const longitude = toFiniteNumber(value.coordinates[0]);
 		const latitude = toFiniteNumber(value.coordinates[1]);
 
-		if (
-			typeof longitude === "number" &&
-			typeof latitude === "number"
-		) {
+		if (typeof longitude === "number" && typeof latitude === "number") {
 			return {
 				coordinates: [longitude, latitude],
 				type:
@@ -534,25 +540,37 @@ const toRegionCoordinates = (
 	};
 };
 
+const toRegionCoordinatesFromRaw = (
+	raw: RawRegionResponse,
+): RegionDetail["coordinatesStandard"] => {
+	if (typeof raw.coordinatesStandard !== "undefined") {
+		return toRegionCoordinates(raw.coordinatesStandard);
+	}
+
+	const longitude = toFiniteNumber(raw.longitude);
+	const latitude = toFiniteNumber(raw.latitude);
+	return {
+		coordinates: [
+			typeof longitude === "number" ? longitude : 0,
+			typeof latitude === "number" ? latitude : 0,
+		],
+		type: "Point",
+	};
+};
+
 const normalizeRegionItem = (value: unknown): RegionDetail | null => {
-	if (
-		!value ||
-		typeof value !== "object" ||
-		Array.isArray(value)
-	) {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
 		return null;
 	}
 
 	const raw = value as RawRegionResponse;
 	const id = toPositiveFiniteNumber(raw.id);
-	const code = toTrimmedString(raw.name);
-	const displayName = toTrimmedString(raw.displayName);
+	const code = toTrimmedString(raw.code) ?? toTrimmedString(raw.name);
+	const displayName =
+		toTrimmedString(raw.displayName) ?? toTrimmedString(raw.display_name);
+	const province = toTrimmedString(raw.province) ?? "";
 
-	if (
-		typeof id !== "number" ||
-		!code ||
-		!displayName
-	) {
+	if (typeof id !== "number" || !code || !displayName) {
 		return null;
 	}
 
@@ -560,22 +578,39 @@ const normalizeRegionItem = (value: unknown): RegionDetail | null => {
 		id,
 		code,
 		displayName,
-		coordinatesStandard: toRegionCoordinates(raw.coordinatesStandard),
-		active: toBoolean(raw.active) ?? false,
-		sortOrder: Math.max(0, Math.trunc(toFiniteNumber(raw.sortOrder) ?? 0)),
+		province,
+		coordinatesStandard: toRegionCoordinatesFromRaw(raw),
+		active: toBoolean(raw.active) ?? toBoolean(raw.is_active) ?? false,
+		sortOrder: Math.max(
+			0,
+			Math.trunc(
+				toFiniteNumber(raw.sortOrder) ??
+					toFiniteNumber(raw.sort_order) ??
+					0,
+			),
+		),
 		restaurantCount: Math.max(
 			0,
-			Math.trunc(toFiniteNumber(raw.restaurantCount) ?? 0),
+			Math.trunc(
+				toFiniteNumber(raw.restaurantCount) ??
+					toFiniteNumber(raw.restaurant_count) ??
+					0,
+			),
 		),
 	};
 };
 
 const toRegionListResponse = (
-	payload:
-		| RegionListResponse
-		| { regions?: unknown }
-		| undefined,
+	payload: RegionListResponse | { regions?: unknown } | unknown[] | undefined,
 ): RegionListResponse => {
+	if (Array.isArray(payload)) {
+		return {
+			regions: payload
+				.map((region) => normalizeRegionItem(region))
+				.filter((region): region is RegionDetail => region !== null),
+		};
+	}
+
 	if (
 		payload &&
 		typeof payload === "object" &&
@@ -598,10 +633,7 @@ const toRegionListResponse = (
 };
 
 const toRegionDetail = (
-	payload:
-		| RegionDetail
-		| { region?: unknown }
-		| undefined,
+	payload: RegionDetail | { region?: unknown } | undefined,
 ): RegionDetail | null => {
 	if (
 		payload &&
@@ -644,10 +676,23 @@ const getRestaurantSyncJobPath = (jobId: number) =>
 const getRestaurantSyncSinglePath = (restaurantId: number) =>
 	`restaurants/${restaurantId}/sync-jobs`;
 
-const fetchRegionList = async (): Promise<RegionListResponse> => {
+const buildRegionListPath = (query?: RegionListQuery): string => {
+	const province = query?.province?.trim();
+	if (!province) {
+		return toAdminPath("regions");
+	}
+
+	const search = new URLSearchParams();
+	search.set("province", province);
+	return `${toAdminPath("regions")}?${search.toString()}`;
+};
+
+const fetchRegionList = async (
+	query?: RegionListQuery,
+): Promise<RegionListResponse> => {
 	const response = await requestWithAutoRefresh<
-		RegionListResponse | { regions?: unknown }
-	>(toAdminPath("regions"), {
+		RegionListResponse | { regions?: unknown } | unknown[]
+	>(buildRegionListPath(query), {
 		method: "GET",
 	});
 
@@ -676,10 +721,7 @@ export const realAdminService: AdminService = {
 	async getCategories(): Promise<CategoryOption[]> {
 		const response = await requestWithAutoRefresh<
 			CategoryOption[] | { categories?: CategoryOption[] }
-		>(
-			toAdminPath("categories"),
-			{},
-		);
+		>(toAdminPath("categories"), {});
 
 		return normalizeCategories(toCategoryArray(response));
 	},
@@ -688,11 +730,12 @@ export const realAdminService: AdminService = {
 		keyword: string,
 	): Promise<RestaurantSearchResponse> {
 		const trimmedKeyword = keyword.trim();
-		const response = await requestWithAutoRefresh<
-			RestaurantSearchResponse
-		>(`${toAdminPath("restaurants/search")}?${buildRestaurantSearchQuery(trimmedKeyword)}`, {
-			method: "GET",
-		});
+		const response = await requestWithAutoRefresh<RestaurantSearchResponse>(
+			`${toAdminPath("restaurants/search")}?${buildRestaurantSearchQuery(trimmedKeyword)}`,
+			{
+				method: "GET",
+			},
+		);
 
 		return response;
 	},
@@ -717,8 +760,10 @@ export const realAdminService: AdminService = {
 		);
 	},
 
-	async getRegionSummaries(): Promise<RegionListResponse> {
-		return fetchRegionList();
+	async getRegionSummaries(
+		query?: RegionListQuery,
+	): Promise<RegionListResponse> {
+		return fetchRegionList(query);
 	},
 
 	async getRegionById(id: number): Promise<RegionDetail | null> {

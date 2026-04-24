@@ -1,10 +1,4 @@
-import {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import type {
@@ -27,6 +21,7 @@ export type RegionStatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
 export type RegionDraft = {
 	code: string;
 	displayName: string;
+	province: string;
 	longitude: string;
 	latitude: string;
 	active: boolean;
@@ -36,13 +31,19 @@ export type RegionDraft = {
 type RegionDashboardQuery = {
 	keyword?: string;
 	mode?: "create";
+	province?: string;
 	regionId?: number;
 	status: RegionStatusFilter;
 };
 
 type RegionDraftErrors = Partial<
 	Record<
-		"code" | "displayName" | "latitude" | "longitude" | "sortOrder",
+		| "code"
+		| "displayName"
+		| "latitude"
+		| "longitude"
+		| "province"
+		| "sortOrder",
 		string
 	>
 >;
@@ -75,6 +76,7 @@ const toRegionDashboardQuery = (
 	return {
 		keyword: toTrimmedValue(searchParams.get("keyword")),
 		mode: searchParams.get("mode") === "create" ? "create" : undefined,
+		province: toTrimmedValue(searchParams.get("province")),
 		regionId: toPositiveInteger(searchParams.get("regionId")),
 		status: normalizedStatus,
 	};
@@ -88,6 +90,9 @@ const toSearchParams = (query: RegionDashboardQuery) => {
 	}
 	if (query.mode === "create") {
 		nextSearchParams.set("mode", "create");
+	}
+	if (query.province) {
+		nextSearchParams.set("province", query.province);
 	}
 	if (typeof query.regionId === "number") {
 		nextSearchParams.set("regionId", String(query.regionId));
@@ -106,6 +111,7 @@ const isSameQuery = (
 	return (
 		left.keyword === right.keyword &&
 		left.mode === right.mode &&
+		left.province === right.province &&
 		left.regionId === right.regionId &&
 		left.status === right.status
 	);
@@ -115,20 +121,23 @@ const toCoordinateInput = (value: number) => {
 	return Number.isInteger(value) ? String(value) : value.toFixed(6);
 };
 
-const toRegionDraft = (
-	region: RegionDetail,
-): RegionDraft => ({
+const toRegionDraft = (region: RegionDetail): RegionDraft => ({
 	code: region.code,
 	displayName: region.displayName,
+	province: region.province,
 	longitude: toCoordinateInput(region.coordinatesStandard.coordinates[0]),
 	latitude: toCoordinateInput(region.coordinatesStandard.coordinates[1]),
 	active: region.active,
 	sortOrder: String(region.sortOrder),
 });
 
-const createEmptyDraft = (nextSortOrder: number): RegionDraft => ({
+const createEmptyDraft = (
+	nextSortOrder: number,
+	province = "",
+): RegionDraft => ({
 	code: "",
 	displayName: "",
+	province,
 	longitude: "",
 	latitude: "",
 	active: true,
@@ -169,6 +178,7 @@ const getDraftErrors = (
 	const errors: RegionDraftErrors = {};
 	const normalizedCode = normalizeRegionCode(draft.code);
 	const displayName = draft.displayName.trim();
+	const province = draft.province.trim();
 	const longitude = parseRequiredNumber(draft.longitude);
 	const latitude = parseRequiredNumber(draft.latitude);
 	const sortOrder = parseOptionalInteger(draft.sortOrder);
@@ -204,6 +214,10 @@ const getDraftErrors = (
 		errors.displayName = "이미 사용 중인 지역명입니다.";
 	}
 
+	if (!province) {
+		errors.province = "시/도를 선택해 주세요.";
+	}
+
 	if (longitude === null || longitude < -180 || longitude > 180) {
 		errors.longitude = "경도는 -180부터 180 사이여야 합니다.";
 	}
@@ -222,6 +236,7 @@ const getDraftErrors = (
 const buildCreateRequest = (draft: RegionDraft): RegionCreateRequest => ({
 	code: normalizeRegionCode(draft.code),
 	displayName: draft.displayName.trim(),
+	province: draft.province.trim(),
 	coordinatesStandard: {
 		coordinates: [
 			Number(draft.longitude.trim()),
@@ -239,6 +254,7 @@ const buildPatchRequest = (
 	const patch: RegionPatchRequest = {};
 	const nextCode = normalizeRegionCode(draft.code);
 	const nextDisplayName = draft.displayName.trim();
+	const nextProvince = draft.province.trim();
 	const nextLongitude = Number(draft.longitude.trim());
 	const nextLatitude = Number(draft.latitude.trim());
 	const nextSortOrder = Number(draft.sortOrder.trim());
@@ -248,6 +264,9 @@ const buildPatchRequest = (
 	}
 	if (nextDisplayName !== currentRegion.displayName) {
 		patch.displayName = nextDisplayName;
+	}
+	if (nextProvince !== currentRegion.province) {
+		patch.province = nextProvince;
 	}
 	if (
 		nextLongitude !== currentRegion.coordinatesStandard.coordinates[0] ||
@@ -278,7 +297,7 @@ const hasFormChanges = (
 	}
 
 	if (isCreateMode) {
-		const initialDraft = createEmptyDraft(nextSortOrder);
+		const initialDraft = createEmptyDraft(nextSortOrder, draft.province);
 		return JSON.stringify(draft) !== JSON.stringify(initialDraft);
 	}
 
@@ -286,7 +305,9 @@ const hasFormChanges = (
 		return false;
 	}
 
-	return JSON.stringify(draft) !== JSON.stringify(toRegionDraft(currentRegion));
+	return (
+		JSON.stringify(draft) !== JSON.stringify(toRegionDraft(currentRegion))
+	);
 };
 
 export function useRegionDashboardPage() {
@@ -308,7 +329,7 @@ export function useRegionDashboardPage() {
 		data: regionListResponse = { regions: [] },
 		error: regionListError,
 		isLoading: isRegionListLoading,
-	} = useGetRegionSummaries();
+	} = useGetRegionSummaries({ province: query.province });
 
 	const selectedRegionId =
 		query.mode === "create" ? undefined : query.regionId;
@@ -340,7 +361,8 @@ export function useRegionDashboardPage() {
 	const nextSortOrder = useMemo(() => {
 		return (
 			regions.reduce(
-				(maxSortOrder, region) => Math.max(maxSortOrder, region.sortOrder),
+				(maxSortOrder, region) =>
+					Math.max(maxSortOrder, region.sortOrder),
 				-1,
 			) + 1
 		);
@@ -358,6 +380,7 @@ export function useRegionDashboardPage() {
 						: !region.active;
 			const matchesKeyword = normalizedKeyword
 				? [region.code, region.displayName]
+						.concat(region.province ? [region.province] : [])
 						.join(" ")
 						.toLowerCase()
 						.includes(normalizedKeyword)
@@ -384,7 +407,8 @@ export function useRegionDashboardPage() {
 		[draft, regions, selectedRegion?.id],
 	);
 	const hasUnsavedChanges = useMemo(
-		() => hasFormChanges(draft, selectedRegion, isCreateMode, nextSortOrder),
+		() =>
+			hasFormChanges(draft, selectedRegion, isCreateMode, nextSortOrder),
 		[draft, isCreateMode, nextSortOrder, selectedRegion],
 	);
 	const canSubmit =
@@ -407,6 +431,7 @@ export function useRegionDashboardPage() {
 					keyword: toTrimmedValue(resolvedQuery.keyword ?? null),
 					mode:
 						resolvedQuery.mode === "create" ? "create" : undefined,
+					province: toTrimmedValue(resolvedQuery.province ?? null),
 					regionId: resolvedQuery.regionId,
 					status: resolvedQuery.status ?? DEFAULT_STATUS_FILTER,
 				};
@@ -444,7 +469,11 @@ export function useRegionDashboardPage() {
 	useEffect(() => {
 		if (isCreateMode) {
 			setIsEditing(true);
-			setDraft((currentDraft) => currentDraft ?? createEmptyDraft(nextSortOrder));
+			setDraft(
+				(currentDraft) =>
+					currentDraft ??
+					createEmptyDraft(nextSortOrder, query.province ?? ""),
+			);
 			return;
 		}
 
@@ -457,7 +486,13 @@ export function useRegionDashboardPage() {
 		if (!isEditing) {
 			setDraft(toRegionDraft(selectedRegion));
 		}
-	}, [isCreateMode, isEditing, nextSortOrder, selectedRegion]);
+	}, [
+		isCreateMode,
+		isEditing,
+		nextSortOrder,
+		query.province,
+		selectedRegion,
+	]);
 
 	useEffect(() => {
 		if (isCreateMode || isRegionListLoading) {
@@ -520,6 +555,17 @@ export function useRegionDashboardPage() {
 		[setQueryWithSync],
 	);
 
+	const handleProvinceChange = useCallback(
+		(province: string) => {
+			setQueryWithSync((current) => ({
+				...current,
+				province: toTrimmedValue(province) ?? undefined,
+				regionId: undefined,
+			}));
+		},
+		[setQueryWithSync],
+	);
+
 	const handleSelectRegion = useCallback(
 		(regionId: number) => {
 			setPanelErrorMessage("");
@@ -540,13 +586,13 @@ export function useRegionDashboardPage() {
 		setIsDeleteDialogOpen(false);
 		setDeleteTargetRegion(null);
 		setIsEditing(true);
-		setDraft(createEmptyDraft(nextSortOrder));
+		setDraft(createEmptyDraft(nextSortOrder, query.province ?? ""));
 		setQueryWithSync((current) => ({
 			...current,
 			mode: "create",
 			regionId: undefined,
 		}));
-	}, [nextSortOrder, setQueryWithSync]);
+	}, [nextSortOrder, query.province, setQueryWithSync]);
 
 	const handleEditStart = useCallback(() => {
 		if (!selectedRegion) {
@@ -649,7 +695,9 @@ export function useRegionDashboardPage() {
 				id: selectedRegion.id,
 				patch,
 			});
-			setToastMessage(`"${updatedRegion.displayName}" 지역을 수정했습니다.`);
+			setToastMessage(
+				`"${updatedRegion.displayName}" 지역을 수정했습니다.`,
+			);
 			setIsEditing(false);
 			setDraft(toRegionDraft(updatedRegion));
 		} catch (error) {
@@ -679,9 +727,7 @@ export function useRegionDashboardPage() {
 			: "";
 
 	const canDeleteSelected = Boolean(
-		selectedRegion &&
-			selectedRegion.restaurantCount === 0 &&
-			!isCreateMode,
+		selectedRegion && selectedRegion.restaurantCount === 0 && !isCreateMode,
 	);
 
 	const openDeleteDialog = useCallback(() => {
@@ -723,14 +769,22 @@ export function useRegionDashboardPage() {
 				getErrorMessage(error, "지역 삭제에 실패했습니다."),
 			);
 		}
-	}, [closeDeleteDialog, deleteRegionMutation, deleteTargetRegion, setQueryWithSync]);
+	}, [
+		closeDeleteDialog,
+		deleteRegionMutation,
+		deleteTargetRegion,
+		setQueryWithSync,
+	]);
 
 	const listErrorMessage = regionListError
 		? getErrorMessage(regionListError, "지역 목록을 불러오지 못했습니다.")
 		: "";
 	const detailErrorMessage =
 		regionDetailError && !selectedRegion
-			? getErrorMessage(regionDetailError, "지역 상세 정보를 불러오지 못했습니다.")
+			? getErrorMessage(
+					regionDetailError,
+					"지역 상세 정보를 불러오지 못했습니다.",
+				)
 			: "";
 
 	return {
@@ -750,6 +804,7 @@ export function useRegionDashboardPage() {
 		handleDraftChange,
 		handleEditStart,
 		handleOpenCreate,
+		handleProvinceChange,
 		handleSearchInputChange,
 		handleSelectRegion,
 		handleStatusChange,

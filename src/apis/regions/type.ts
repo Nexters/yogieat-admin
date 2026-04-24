@@ -7,6 +7,7 @@ export type RegionSummary = {
 	id: number;
 	code: string;
 	displayName: string;
+	province: string;
 	coordinatesStandard: RegionCoordinates;
 	active: boolean;
 	sortOrder: number;
@@ -19,6 +20,10 @@ export type RegionListResponse = {
 	regions: RegionSummary[];
 };
 
+export type RegionListQuery = {
+	province?: string;
+};
+
 export type RegionCoordinatesRequest = {
 	coordinates: [number, number];
 };
@@ -26,6 +31,7 @@ export type RegionCoordinatesRequest = {
 export type RegionCreateRequest = {
 	code: string;
 	displayName: string;
+	province?: string;
 	coordinatesStandard: RegionCoordinatesRequest;
 	active?: boolean;
 	sortOrder?: number;

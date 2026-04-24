@@ -3,11 +3,14 @@ import type {
 	RegionCreateRequest,
 	RegionDetail,
 	RegionListResponse,
+	RegionListQuery,
 	RegionPatchRequest,
 } from "#/apis/regions/type";
 
-export const getRegionSummaries = (): Promise<RegionListResponse> => {
-	return adminService.getRegionSummaries();
+export const getRegionSummaries = (
+	query?: RegionListQuery,
+): Promise<RegionListResponse> => {
+	return adminService.getRegionSummaries(query);
 };
 
 export const getRegionById = (id: number): Promise<RegionDetail | null> => {
