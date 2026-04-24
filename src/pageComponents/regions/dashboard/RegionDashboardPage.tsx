@@ -13,6 +13,26 @@ const REGION_STATUS_OPTIONS = [
 	{ label: "비활성", value: "INACTIVE" },
 ] as const;
 
+const REGION_PROVINCE_OPTIONS = [
+	"서울",
+	"경기",
+	"인천",
+	"부산",
+	"대구",
+	"광주",
+	"대전",
+	"울산",
+	"세종",
+	"강원",
+	"충북",
+	"충남",
+	"전북",
+	"전남",
+	"경북",
+	"경남",
+	"제주",
+] as const;
+
 const formatCoordinate = (value: number) => value.toFixed(4);
 
 const getRegionStatusLabel = (region: RegionDetail) =>
@@ -30,7 +50,9 @@ function OverviewCard({
 	return (
 		<article className="admin-region-overview-card">
 			<p className="admin-region-overview-card__title">{title}</p>
-			<strong className="admin-region-overview-card__value">{value}</strong>
+			<strong className="admin-region-overview-card__value">
+				{value}
+			</strong>
 			<p className="admin-region-overview-card__description">
 				{description}
 			</p>
@@ -92,6 +114,9 @@ function RegionListCard({
 				</div>
 			</div>
 			<div className="admin-region-card__footer">
+				{region.province ? (
+					<Tag size="small">{region.province}</Tag>
+				) : null}
 				<Tag size="small">{coordinateSummary}</Tag>
 			</div>
 		</button>
@@ -113,18 +138,14 @@ function ReadonlyField({
 	);
 }
 
-function EmptyInspector({
-	onCreate,
-}: {
-	onCreate: () => void;
-}) {
+function EmptyInspector({ onCreate }: { onCreate: () => void }) {
 	return (
 		<div className="admin-region-empty-state">
 			<div>
 				<h3>지역을 선택해 주세요</h3>
 				<p>
-					목록에서 지역을 선택하면 연결 맛집 수, 좌표, 운영 상태를
-					한 번에 확인하고 바로 수정할 수 있습니다.
+					목록에서 지역을 선택하면 연결 맛집 수, 좌표, 운영 상태를 한
+					번에 확인하고 바로 수정할 수 있습니다.
 				</p>
 			</div>
 			<Button size="sm" variant="primary" onClick={onCreate}>
@@ -154,6 +175,7 @@ export function RegionDashboardPage() {
 		handleDraftChange,
 		handleEditStart,
 		handleOpenCreate,
+		handleProvinceChange,
 		handleSearchInputChange,
 		handleSelectRegion,
 		handleStatusChange,
@@ -191,7 +213,7 @@ export function RegionDashboardPage() {
 
 	const inspectorTitle = isCreateMode
 		? "새 지역 등록"
-		: selectedRegion?.displayName ?? "지역 상세";
+		: (selectedRegion?.displayName ?? "지역 상세");
 	const inspectorDescription = isCreateMode
 		? `정렬 순서는 기본값으로 ${nextSortOrder}가 제안됩니다.`
 		: selectedRegion
@@ -258,11 +280,15 @@ export function RegionDashboardPage() {
 						<div>
 							<h2>지역 목록</h2>
 							<p>
-								코드, 운영용 이름, 연결 맛집 수를 기준으로 지역을
-								빠르게 탐색합니다.
+								코드, 운영용 이름, 연결 맛집 수를 기준으로
+								지역을 빠르게 탐색합니다.
 							</p>
 						</div>
-						<Button size="sm" variant="primary" onClick={handleOpenCreate}>
+						<Button
+							size="sm"
+							variant="primary"
+							onClick={handleOpenCreate}
+						>
 							지역 추가
 						</Button>
 					</div>
@@ -289,6 +315,22 @@ export function RegionDashboardPage() {
 
 						<div className="admin-filters admin-filters--inline">
 							<label>
+								<span>시/도</span>
+								<select
+									value={query.province ?? ""}
+									onChange={(event) =>
+										handleProvinceChange(event.target.value)
+									}
+								>
+									<option value="">전체</option>
+									{REGION_PROVINCE_OPTIONS.map((province) => (
+										<option key={province} value={province}>
+											{province}
+										</option>
+									))}
+								</select>
+							</label>
+							<label>
 								<span>상태</span>
 								<select
 									value={query.status}
@@ -302,7 +344,10 @@ export function RegionDashboardPage() {
 									}
 								>
 									{REGION_STATUS_OPTIONS.map((option) => (
-										<option key={option.value} value={option.value}>
+										<option
+											key={option.value}
+											value={option.value}
+										>
 											{option.label}
 										</option>
 									))}
@@ -327,8 +372,13 @@ export function RegionDashboardPage() {
 								<RegionListCard
 									key={region.id}
 									region={region}
-									isSelected={selectedRegion?.id === region.id && !isCreateMode}
-									onSelect={() => handleSelectRegion(region.id)}
+									isSelected={
+										selectedRegion?.id === region.id &&
+										!isCreateMode
+									}
+									onSelect={() =>
+										handleSelectRegion(region.id)
+									}
 								/>
 							))
 						) : (
@@ -363,7 +413,9 @@ export function RegionDashboardPage() {
 											loading={isSaving}
 											disabled={!canSubmit}
 										>
-											{isCreateMode ? "지역 등록" : "저장"}
+											{isCreateMode
+												? "지역 등록"
+												: "저장"}
 										</Button>
 										<Button
 											size="sm"
@@ -442,7 +494,10 @@ export function RegionDashboardPage() {
 												}
 												placeholder="예: SEONGSU"
 											/>
-											<small>{draftErrors.code ?? "영문 대문자, 숫자, 언더스코어만 허용됩니다."}</small>
+											<small>
+												{draftErrors.code ??
+													"영문 대문자, 숫자, 언더스코어만 허용됩니다."}
+											</small>
 										</label>
 
 										<label className="admin-field">
@@ -457,7 +512,39 @@ export function RegionDashboardPage() {
 												}
 												placeholder="예: 성수역"
 											/>
-											<small>{draftErrors.displayName ?? "운영자와 맛집 동기화 작업자가 함께 보는 이름입니다."}</small>
+											<small>
+												{draftErrors.displayName ??
+													"운영자와 맛집 동기화 작업자가 함께 보는 이름입니다."}
+											</small>
+										</label>
+
+										<label className="admin-field">
+											<span>시/도</span>
+											<select
+												value={draft.province}
+												onChange={(event) =>
+													handleDraftChange(
+														"province",
+														event.target.value,
+													)
+												}
+											>
+												<option value="">선택</option>
+												{REGION_PROVINCE_OPTIONS.map(
+													(province) => (
+														<option
+															key={province}
+															value={province}
+														>
+															{province}
+														</option>
+													),
+												)}
+											</select>
+											<small>
+												{draftErrors.province ??
+													"목록 조회에서 시/도 필터 기준으로 사용됩니다."}
+											</small>
 										</label>
 
 										<label className="admin-field">
@@ -472,7 +559,10 @@ export function RegionDashboardPage() {
 												}
 												placeholder="126.9236"
 											/>
-											<small>{draftErrors.longitude ?? "지도 중심점 계산 기준이 되는 값입니다."}</small>
+											<small>
+												{draftErrors.longitude ??
+													"지도 중심점 계산 기준이 되는 값입니다."}
+											</small>
 										</label>
 
 										<label className="admin-field">
@@ -487,7 +577,10 @@ export function RegionDashboardPage() {
 												}
 												placeholder="37.5572"
 											/>
-											<small>{draftErrors.latitude ?? "지도 중심점 계산 기준이 되는 값입니다."}</small>
+											<small>
+												{draftErrors.latitude ??
+													"지도 중심점 계산 기준이 되는 값입니다."}
+											</small>
 										</label>
 
 										<label className="admin-field">
@@ -500,9 +593,14 @@ export function RegionDashboardPage() {
 														event.target.value,
 													)
 												}
-												placeholder={String(nextSortOrder)}
+												placeholder={String(
+													nextSortOrder,
+												)}
 											/>
-											<small>{draftErrors.sortOrder ?? "값이 작을수록 목록 상단에 노출됩니다."}</small>
+											<small>
+												{draftErrors.sortOrder ??
+													"값이 작을수록 목록 상단에 노출됩니다."}
+											</small>
 										</label>
 
 										<label className="admin-region-toggle">
@@ -519,8 +617,9 @@ export function RegionDashboardPage() {
 											<div>
 												<span>운영 상태</span>
 												<p>
-													비활성화하면 지역은 유지하되 운영 노출만
-													조정할 수 있습니다.
+													비활성화하면 지역은 유지하되
+													운영 노출만 조정할 수
+													있습니다.
 												</p>
 											</div>
 										</label>
@@ -531,7 +630,8 @@ export function RegionDashboardPage() {
 											<div>
 												<p>미리보기</p>
 												<h3>
-													{draft.displayName.trim() || "새 지역"}
+													{draft.displayName.trim() ||
+														"새 지역"}
 												</h3>
 											</div>
 											<span
@@ -544,7 +644,9 @@ export function RegionDashboardPage() {
 													.filter(Boolean)
 													.join(" ")}
 											>
-												{draft.active ? "운영중" : "비활성"}
+												{draft.active
+													? "운영중"
+													: "비활성"}
 											</span>
 										</div>
 										<dl className="admin-region-preview__meta">
@@ -554,12 +656,19 @@ export function RegionDashboardPage() {
 											</div>
 											<div>
 												<dt>정렬 순서</dt>
-												<dd>{draft.sortOrder || "-"}</dd>
+												<dd>
+													{draft.sortOrder || "-"}
+												</dd>
+											</div>
+											<div>
+												<dt>시/도</dt>
+												<dd>{draft.province || "-"}</dd>
 											</div>
 											<div>
 												<dt>기준 좌표</dt>
 												<dd>
-													{draftLongitude} / {draftLatitude}
+													{draftLongitude} /{" "}
+													{draftLatitude}
 												</dd>
 											</div>
 										</dl>
@@ -574,7 +683,15 @@ export function RegionDashboardPage() {
 										/>
 										<ReadonlyField
 											label="운영 상태"
-											value={getRegionStatusLabel(selectedRegion)}
+											value={getRegionStatusLabel(
+												selectedRegion,
+											)}
+										/>
+										<ReadonlyField
+											label="시/도"
+											value={
+												selectedRegion.province || "-"
+											}
 										/>
 										<ReadonlyField
 											label="정렬 순서"
@@ -590,13 +707,17 @@ export function RegionDashboardPage() {
 										<ReadonlyField
 											label="경도"
 											value={formatCoordinate(
-												selectedRegion.coordinatesStandard.coordinates[0],
+												selectedRegion
+													.coordinatesStandard
+													.coordinates[0],
 											)}
 										/>
 										<ReadonlyField
 											label="위도"
 											value={formatCoordinate(
-												selectedRegion.coordinatesStandard.coordinates[1],
+												selectedRegion
+													.coordinatesStandard
+													.coordinates[1],
 											)}
 										/>
 									</div>
@@ -604,9 +725,10 @@ export function RegionDashboardPage() {
 									<div className="admin-region-guidance">
 										<h3>운용 가이드</h3>
 										<p>
-											지역 코드는 맛집 데이터와 직접 연결되므로, 코드
-											수정 시 연결된 맛집 화면 반영 여부를 함께
-											확인하는 것이 안전합니다.
+											지역 코드는 맛집 데이터와 직접
+											연결되므로, 코드 수정 시 연결된 맛집
+											화면 반영 여부를 함께 확인하는 것이
+											안전합니다.
 										</p>
 										<p>
 											{selectedRegion.restaurantCount > 0

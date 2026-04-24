@@ -15,6 +15,7 @@ import {
 	RegionCreateRequest,
 	RegionDetail,
 	RegionListResponse,
+	RegionListQuery,
 	RegionPatchRequest,
 	RestaurantCreateRequest,
 	RestaurantCreateResponse,
@@ -487,6 +488,7 @@ const REGION_SEED: RegionDetail[] = REGION_CODES.map((regionCode, index) => ({
 	id: index + 1,
 	code: regionCode,
 	displayName: REGION_LABEL_BY_CODE[regionCode] ?? regionCode,
+	province: "서울",
 	coordinatesStandard: {
 		coordinates: REGION_COORDINATES_BY_CODE[regionCode] ?? [0, 0],
 		type: "Point",
@@ -687,7 +689,10 @@ const validateRegionCoordinates = (
 		| RegionPatchRequest["coordinatesStandard"]
 		| undefined,
 ) => {
-	if (!coordinatesStandard || !Array.isArray(coordinatesStandard.coordinates)) {
+	if (
+		!coordinatesStandard ||
+		!Array.isArray(coordinatesStandard.coordinates)
+	) {
 		throw new Error("지역 좌표가 올바르지 않습니다.");
 	}
 
@@ -706,10 +711,7 @@ const validateRegionCoordinates = (
 	}
 };
 
-const validateRegionCode = (
-	code: string,
-	currentRegionId?: number,
-) => {
+const validateRegionCode = (code: string, currentRegionId?: number) => {
 	if (!code) {
 		throw new Error("지역 코드는 필수입니다.");
 	}
@@ -724,8 +726,7 @@ const validateRegionCode = (
 	}
 
 	const hasDuplicateCode = state.regions.some(
-		(region) =>
-			region.id !== currentRegionId && region.code === code,
+		(region) => region.id !== currentRegionId && region.code === code,
 	);
 	if (hasDuplicateCode) {
 		throw new Error("이미 존재하는 지역 코드입니다.");
@@ -748,8 +749,7 @@ const validateRegionDisplayName = (
 
 	const hasDuplicateDisplayName = state.regions.some(
 		(region) =>
-			region.id !== currentRegionId &&
-			region.displayName === displayName,
+			region.id !== currentRegionId && region.displayName === displayName,
 	);
 	if (hasDuplicateDisplayName) {
 		throw new Error("이미 존재하는 지역명입니다.");
@@ -890,9 +890,7 @@ const normalizeSearchKeyword = (keyword: string | undefined): string => {
 	return trimmed;
 };
 
-const toSearchItemsByKeyword = (
-	keyword: string,
-): RestaurantSearchItem[] => {
+const toSearchItemsByKeyword = (keyword: string): RestaurantSearchItem[] => {
 	const normalizedKeyword = keyword.toLowerCase();
 	const filtered = RESTAURANT_SEARCH_SEED.filter((item) =>
 		[
@@ -923,7 +921,8 @@ const toRestaurantLocationFromSearchItem = (
 };
 
 const createRestaurantId = (restaurants: RestaurantDetail[]) =>
-	(restaurants.reduce((acc, restaurant) => Math.max(acc, restaurant.id), 0) || 0) + 1;
+	(restaurants.reduce((acc, restaurant) => Math.max(acc, restaurant.id), 0) ||
+		0) + 1;
 
 const createRestaurantSyncJob = (
 	scope: GetRestaurantSyncJobResponse["scope"],
@@ -951,7 +950,9 @@ const createRestaurantSyncJob = (
 	};
 };
 
-const persistSyncJob = (job: GetRestaurantSyncJobResponse): GetRestaurantSyncJobResponse => {
+const persistSyncJob = (
+	job: GetRestaurantSyncJobResponse,
+): GetRestaurantSyncJobResponse => {
 	state.syncJobs = [job, ...state.syncJobs];
 	return clone(job);
 };
@@ -1187,7 +1188,10 @@ export const adminMockDb = {
 				return {
 					...gathering,
 					participantCount,
-					fillRate: toFillRate(participantCount, gathering.peopleCount),
+					fillRate: toFillRate(
+						participantCount,
+						gathering.peopleCount,
+					),
 				};
 			});
 		const participants = clone(state.participants).sort((a, b) =>
@@ -1292,7 +1296,8 @@ export const adminMockDb = {
 		const normalized = normalizeSearchKeyword(keyword);
 		return {
 			keyword: normalized,
-			items: normalized.length > 0 ? toSearchItemsByKeyword(normalized) : [],
+			items:
+				normalized.length > 0 ? toSearchItemsByKeyword(normalized) : [],
 		};
 	},
 
@@ -1344,8 +1349,7 @@ export const adminMockDb = {
 			name: matchedSearchItem?.placeName ?? `맛집 ${externalId}`,
 			address: matchedSearchItem?.addressName ?? "",
 			rating: null,
-			imageUrl:
-				"http://t1.daumcdn.net/local/placeholder.jpg",
+			imageUrl: "http://t1.daumcdn.net/local/placeholder.jpg",
 			mapUrl: `https://place.map.kakao.com/${externalId}`,
 			representativeReview: "",
 			description: request.description?.trim() ?? "",
@@ -1393,9 +1397,14 @@ export const adminMockDb = {
 		};
 	},
 
-	getRegionSummaries(): RegionListResponse {
+	getRegionSummaries(query?: RegionListQuery): RegionListResponse {
+		const province = query?.province?.trim();
+		const regions = province
+			? state.regions.filter((region) => region.province === province)
+			: state.regions;
+
 		return {
-			regions: sortRegions(state.regions).map((region) =>
+			regions: sortRegions(regions).map((region) =>
 				buildRegionSummary(region),
 			),
 		};
@@ -1423,6 +1432,7 @@ export const adminMockDb = {
 			id: getNextRegionId(),
 			code,
 			displayName,
+			province: request.province?.trim() || "서울",
 			coordinatesStandard: {
 				coordinates: [
 					request.coordinatesStandard.coordinates[0],
@@ -1440,7 +1450,9 @@ export const adminMockDb = {
 	},
 
 	updateRegion(id: number, patch: RegionPatchRequest): RegionDetail {
-		const targetIndex = state.regions.findIndex((region) => region.id === id);
+		const targetIndex = state.regions.findIndex(
+			(region) => region.id === id,
+		);
 		if (targetIndex < 0) {
 			throw new Error("지역 정보를 찾을 수 없습니다.");
 		}
@@ -1470,6 +1482,10 @@ export const adminMockDb = {
 			...currentRegion,
 			code: nextCode,
 			displayName: nextDisplayName,
+			province:
+				typeof patch.province === "string"
+					? patch.province.trim() || currentRegion.province
+					: currentRegion.province,
 			coordinatesStandard: patch.coordinatesStandard
 				? {
 						coordinates: [
@@ -1504,7 +1520,9 @@ export const adminMockDb = {
 	},
 
 	deleteRegion(id: number): void {
-		const targetIndex = state.regions.findIndex((region) => region.id === id);
+		const targetIndex = state.regions.findIndex(
+			(region) => region.id === id,
+		);
 		if (targetIndex < 0) {
 			throw new Error("삭제할 지역 정보를 찾을 수 없습니다.");
 		}

@@ -297,46 +297,57 @@ export const handlers = [
 
 			return response(
 				ctx.delay(DEFAULT_DELAY_MS),
-				ctx.json(createSuccessResponse(adminMockDb.searchRestaurants(keyword))),
+				ctx.json(
+					createSuccessResponse(
+						adminMockDb.searchRestaurants(keyword),
+					),
+				),
 			);
 		},
 	),
 
-	rest.post(
-		"*/api/v1/admin/restaurants",
-		async (request, response, ctx) => {
-			const payload = (await request.json()) as RestaurantCreateRequest;
-			try {
-				const result = adminMockDb.createRestaurant(payload);
-				return response(
-					ctx.delay(DEFAULT_DELAY_MS),
-					ctx.status(result.duplicated ? 200 : 201),
-					ctx.json(
-						createSuccessResponse(result, result.duplicated ? 200 : 201),
+	rest.post("*/api/v1/admin/restaurants", async (request, response, ctx) => {
+		const payload = (await request.json()) as RestaurantCreateRequest;
+		try {
+			const result = adminMockDb.createRestaurant(payload);
+			return response(
+				ctx.delay(DEFAULT_DELAY_MS),
+				ctx.status(result.duplicated ? 200 : 201),
+				ctx.json(
+					createSuccessResponse(
+						result,
+						result.duplicated ? 200 : 201,
 					),
-				);
-			} catch (error) {
-				return response(
-					ctx.delay(DEFAULT_DELAY_MS),
-					ctx.status(400),
-					ctx.json(
-						createErrorResponse(
-							400,
-							RESTAURANT_ERROR_CODE.CATEGORY_NOT_FOUND,
-							error instanceof Error
-								? error.message
-								: "맛집 생성 요청이 잘못되었습니다.",
-						),
+				),
+			);
+		} catch (error) {
+			return response(
+				ctx.delay(DEFAULT_DELAY_MS),
+				ctx.status(400),
+				ctx.json(
+					createErrorResponse(
+						400,
+						RESTAURANT_ERROR_CODE.CATEGORY_NOT_FOUND,
+						error instanceof Error
+							? error.message
+							: "맛집 생성 요청이 잘못되었습니다.",
 					),
-				);
-			}
-		},
-	),
+				),
+			);
+		}
+	}),
 
-	rest.get("*/api/v1/admin/regions", async (_request, response, ctx) => {
+	rest.get("*/api/v1/admin/regions", async (request, response, ctx) => {
+		const url = new URL(request.url);
+		const province = url.searchParams.get("province") ?? undefined;
+
 		return response(
 			ctx.delay(DEFAULT_DELAY_MS),
-			ctx.json(createSuccessResponse(adminMockDb.getRegions())),
+			ctx.json(
+				createSuccessResponse(
+					adminMockDb.getRegionSummaries({ province }),
+				),
+			),
 		);
 	}),
 

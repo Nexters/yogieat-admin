@@ -14,6 +14,7 @@ import type {
 import type {
 	RegionCreateRequest,
 	RegionDetail,
+	RegionListQuery,
 	RegionListResponse,
 	RegionPatchRequest,
 } from "#/apis/regions";
@@ -52,6 +53,7 @@ export type {
 	ParticipantRole,
 	RegionCreateRequest,
 	RegionDetail,
+	RegionListQuery,
 	RegionListResponse,
 	RegionPatchRequest,
 	RestaurantDetail,
@@ -78,7 +80,9 @@ export type AdminService = {
 		request: RestaurantCreateRequest,
 	) => Promise<RestaurantCreateResponse>;
 	getRegions: () => Promise<RestaurantRegionsResponse>;
-	getRegionSummaries: () => Promise<RegionListResponse>;
+	getRegionSummaries: (
+		query?: RegionListQuery,
+	) => Promise<RegionListResponse>;
 	getRegionById: (id: number) => Promise<RegionDetail | null>;
 	createRegion: (request: RegionCreateRequest) => Promise<RegionDetail>;
 	updateRegion: (
