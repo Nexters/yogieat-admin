@@ -1,11 +1,21 @@
 {
-	"short_name": "Yogieat Admin",
-	"name": "요기잇 관리자 페이지",
+	"short_name": "요기잇 어드민",
+	"name": "요기잇 어드민",
 	"icons": [
 		{
 			"src": "favicon.ico",
 			"sizes": "64x64 32x32 24x24 16x16",
 			"type": "image/x-icon"
+		},
+		{
+			"src": "favicon.png",
+			"type": "image/png",
+			"sizes": "32x32"
+		},
+		{
+			"src": "apple-touch-icon.png",
+			"type": "image/png",
+			"sizes": "180x180"
 		},
 		{
 			"src": "logo192.png",
