@@ -287,6 +287,16 @@ const clearStoredSession = (): void => {
 	window.dispatchEvent(new Event(SESSION_UPDATED_EVENT));
 };
 
+const isUnauthorizedApiError = (error: unknown): error is ApiError => {
+	return error instanceof ApiError && error.status === 401;
+};
+
+const clearSessionOnUnauthorized = (error: unknown): void => {
+	if (isUnauthorizedApiError(error)) {
+		clearStoredSession();
+	}
+};
+
 const getAccessToken = (): string | null => {
 	if (!isBrowser()) {
 		return null;
@@ -355,25 +365,28 @@ const requestWithAutoRefresh = async <T>(
 		});
 	} catch (error) {
 		if (
-			error instanceof ApiError &&
-			error.status === 401 &&
+			isUnauthorizedApiError(error) &&
 			error.code === REFRESH_ERROR_CODE
 		) {
 			try {
 				await refreshAccessToken();
 			} catch (refreshError) {
-				if (refreshError instanceof ApiError) {
-					clearStoredSession();
-				}
+				clearSessionOnUnauthorized(refreshError);
 				throw refreshError;
 			}
 
-			return requestJson<T>(path, {
-				...options,
-				headers: withAuthHeaders(options.headers),
-			});
+			try {
+				return await requestJson<T>(path, {
+					...options,
+					headers: withAuthHeaders(options.headers),
+				});
+			} catch (retryError) {
+				clearSessionOnUnauthorized(retryError);
+				throw retryError;
+			}
 		}
 
+		clearSessionOnUnauthorized(error);
 		throw error;
 	}
 };
