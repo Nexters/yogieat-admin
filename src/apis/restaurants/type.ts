@@ -44,6 +44,8 @@ export type RestaurantDetail = {
 	aiMateSummaryTitle: string;
 	aiMateSummaryContents: string[];
 	timeSlot: TimeSlot;
+	teamRecommendationTitle: string | null;
+	teamRecommendationReason: string | null;
 	isDisplay: boolean;
 	createdAt: string;
 	updatedAt: string;
