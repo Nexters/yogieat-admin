@@ -17,6 +17,7 @@ export type RestaurantListItem = {
 	rating: number | null;
 	imageUrl?: string | null;
 	region: string;
+	isDisplay: boolean;
 	updatedAt: string;
 };
 
@@ -43,6 +44,7 @@ export type RestaurantDetail = {
 	aiMateSummaryTitle: string;
 	aiMateSummaryContents: string[];
 	timeSlot: TimeSlot;
+	isDisplay: boolean;
 	createdAt: string;
 	updatedAt: string;
 };

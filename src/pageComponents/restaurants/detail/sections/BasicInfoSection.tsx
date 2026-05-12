@@ -197,6 +197,29 @@ export function BasicInfoSection({
 						</div>
 					)}
 				</DetailField>
+				<DetailField label="노출 상태">
+					{isEditMode ? (
+						<label className="admin-display-toggle">
+							<input
+								type="checkbox"
+								checked={draft.isDisplay === "true"}
+								onChange={(event) =>
+									onDraftChange(
+										"isDisplay",
+										String(event.target.checked),
+									)
+								}
+							/>
+							<span>
+								{draft.isDisplay === "true" ? "노출" : "숨김"}
+							</span>
+						</label>
+					) : (
+						<div className="admin-readonly">
+							{restaurant.isDisplay ? "노출" : "숨김"}
+						</div>
+					)}
+				</DetailField>
 			</div>
 			<div className="admin-detail-meta">
 				<span>생성일: {formatTimestamp(restaurant.createdAt)}</span>
