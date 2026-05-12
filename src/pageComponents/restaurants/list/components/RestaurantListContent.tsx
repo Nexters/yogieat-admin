@@ -2,7 +2,6 @@ import React from "react";
 
 import type { RestaurantListItem } from "#/apis/restaurants";
 import { RestaurantThumbnail } from "#/pageComponents/restaurants/list/components/RestaurantThumbnail";
-import { toRegionLabel } from "#/shared/constants/DomainLabels";
 import { toLargeCategoryLabel } from "#/shared/constants/DomainLabels";
 import { Button } from "#/shared/ui";
 
@@ -46,6 +45,7 @@ type RestaurantListContentProps = {
 		restaurantName: string,
 	) => Promise<void>;
 	restaurants: RestaurantListItem[];
+	toRegionDisplayName: (region?: string | null) => string;
 };
 
 export function RestaurantListContent({
@@ -57,6 +57,7 @@ export function RestaurantListContent({
 	onNavigateDetail,
 	onDeleteRestaurant,
 	restaurants,
+	toRegionDisplayName,
 }: RestaurantListContentProps) {
 	return (
 		<>
@@ -135,7 +136,7 @@ export function RestaurantListContent({
 											? restaurant.rating.toFixed(1)
 											: "-"}
 									</td>
-									<td>{toRegionLabel(restaurant.region)}</td>
+									<td>{toRegionDisplayName(restaurant.region)}</td>
 									<td>
 										{formatDateTime(restaurant.updatedAt)}
 									</td>
@@ -262,7 +263,9 @@ export function RestaurantListContent({
 										? restaurant.rating.toFixed(1)
 										: "-"}
 								</span>
-								<span>지역: {toRegionLabel(restaurant.region)}</span>
+								<span>
+									지역: {toRegionDisplayName(restaurant.region)}
+								</span>
 								<span>
 									수정일:{" "}
 									{formatDateTime(restaurant.updatedAt)}

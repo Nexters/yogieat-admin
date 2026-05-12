@@ -4,7 +4,6 @@ import type { RestaurantListQuery } from "#/apis/restaurants";
 import {
 	ALL_FILTER_VALUE,
 	toLargeCategoryFilterLabel,
-	toRegionFilterLabel,
 } from "#/shared/constants/DomainLabels";
 import { Button } from "#/shared/ui";
 
@@ -21,6 +20,7 @@ type RestaurantListControlsProps = {
 	onSearchSubmit: () => void;
 	query: RestaurantListQuery;
 	regionOptions: string[];
+	toRegionDisplayName: (region?: string | null) => string;
 };
 
 export function RestaurantListControls({
@@ -36,6 +36,7 @@ export function RestaurantListControls({
 	onSearchSubmit,
 	query,
 	regionOptions,
+	toRegionDisplayName,
 }: RestaurantListControlsProps) {
 	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -69,7 +70,9 @@ export function RestaurantListControls({
 						>
 							{regionOptions.map((region) => (
 								<option key={region} value={region}>
-									{toRegionFilterLabel(region)}
+									{region === ALL_FILTER_VALUE
+										? "전체"
+										: toRegionDisplayName(region)}
 								</option>
 							))}
 						</select>

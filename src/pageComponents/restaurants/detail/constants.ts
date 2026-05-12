@@ -1,11 +1,8 @@
 import type { CategoryOption } from "#/apis/restaurants";
 import {
-	REGION_CODES,
 	TIME_SLOT_CODES,
 	toLargeCategoryLabel,
 } from "#/shared/constants/DomainLabels";
-
-export const REGION_OPTIONS = REGION_CODES;
 
 export const PRICE_LEVEL_OPTIONS = ["₩", "₩₩", "₩₩₩", "₩₩₩₩", "₩₩₩₩₩"];
 

@@ -63,6 +63,7 @@ export function RestaurantListPage() {
 		selectedCreateExternalId,
 		selectedCreateRegion,
 		selectedCreateDescription,
+		toRegionDisplayName,
 		regions,
 		isSearched,
 		handleDeleteRestaurant,
@@ -156,6 +157,7 @@ export function RestaurantListPage() {
 					onSearchSubmit={applySearch}
 					query={query}
 					regionOptions={regionOptions}
+					toRegionDisplayName={toRegionDisplayName}
 				/>
 
 				{isCreatePanelOpen ? (
@@ -192,6 +194,7 @@ export function RestaurantListPage() {
 					onNavigateDetail={navigateToRestaurantDetail}
 					onDeleteRestaurant={openDeleteDialog}
 					restaurants={pageResponse.content}
+					toRegionDisplayName={toRegionDisplayName}
 				/>
 
 				{isDeleteDialogOpen ? (
