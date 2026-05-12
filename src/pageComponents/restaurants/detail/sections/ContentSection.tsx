@@ -60,6 +60,41 @@ export function ContentSection({
 						</div>
 					)}
 				</DetailField>
+				<DetailField label="팀 추천 제목">
+					{isEditMode ? (
+						<input
+							value={draft.teamRecommendationTitle}
+							onChange={(event) =>
+								onDraftChange(
+									"teamRecommendationTitle",
+									event.target.value,
+								)
+							}
+						/>
+					) : (
+						<div className="admin-readonly">
+							{restaurant.teamRecommendationTitle || "-"}
+						</div>
+					)}
+				</DetailField>
+				<DetailField label="팀 추천 사유">
+					{isEditMode ? (
+						<textarea
+							value={draft.teamRecommendationReason}
+							onChange={(event) =>
+								onDraftChange(
+									"teamRecommendationReason",
+									event.target.value,
+								)
+							}
+							rows={3}
+						/>
+					) : (
+						<div className="admin-readonly admin-readonly--multiline">
+							{restaurant.teamRecommendationReason || "-"}
+						</div>
+					)}
+				</DetailField>
 				<DetailField label="AI 요약 제목">
 					{isEditMode ? (
 						<input

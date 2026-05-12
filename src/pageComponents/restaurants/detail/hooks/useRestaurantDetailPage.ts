@@ -1,17 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { CategoryOption, RestaurantDetail } from "#/apis/restaurants";
+import type {
+	CategoryOption,
+	RestaurantDetail,
+	RestaurantRegion,
+} from "#/apis/restaurants";
 import {
 	useGetCategories,
+	useGetRegions,
 	useGetRestaurantById,
 	useSyncRestaurant,
 	useDeleteRestaurant,
 	useUpdateRestaurant,
 } from "#/hooks";
-import {
-	getCategoryLabel,
-	REGION_OPTIONS,
-} from "#/pageComponents/restaurants/detail/constants";
+import { getCategoryLabel } from "#/pageComponents/restaurants/detail/constants";
 import type {
 	CategoryGroup,
 	DraftChangeHandler,
@@ -29,6 +31,8 @@ type UseRestaurantDetailPageParams = {
 	restaurantId: number;
 	onRestaurantDeleted?: () => void;
 };
+
+const EMPTY_REGIONS: RestaurantRegion[] = [];
 
 const toCategoryMediumLabel = (category: CategoryOption): string => {
 	const raw = category.mediumCategory ?? category.name;
@@ -77,6 +81,8 @@ export function useRestaurantDetailPage({
 }: UseRestaurantDetailPageParams) {
 	const [isEditMode, setIsEditMode] = useState(false);
 	const { data: categories = [] } = useGetCategories();
+	const { data: regionsResponse } = useGetRegions();
+	const regions: RestaurantRegion[] = regionsResponse?.regions ?? EMPTY_REGIONS;
 	const {
 		data: restaurantQueryData,
 		error: restaurantQueryError,
@@ -414,7 +420,7 @@ export function useRestaurantDetailPage({
 	}, [hasValidId, restaurantId, syncRestaurantMutation]);
 
 	const regionOptions = useMemo(() => {
-		const set = new Set<string>(REGION_OPTIONS);
+		const set = new Set<string>(regions.map((region) => region.name));
 		if (draft?.region) {
 			set.add(draft.region);
 		}
@@ -422,7 +428,24 @@ export function useRestaurantDetailPage({
 			set.add(restaurant.region);
 		}
 		return Array.from(set);
-	}, [draft?.region, restaurant?.region]);
+	}, [draft?.region, restaurant?.region, regions]);
+
+	const regionDisplayNameByCode = useMemo(() => {
+		return new Map(
+			regions.map((region) => [region.name, region.displayName]),
+		);
+	}, [regions]);
+
+	const toRegionDisplayName = useCallback(
+		(region?: string | null) => {
+			if (!region) {
+				return "-";
+			}
+
+			return regionDisplayNameByCode.get(region) ?? region;
+		},
+		[regionDisplayNameByCode],
+	);
 
 	return {
 		activeCategoryGroup,
@@ -457,5 +480,6 @@ export function useRestaurantDetailPage({
 		setIsDetailImageError,
 		toastMessage,
 		toCategoryLabel: getCategoryLabel,
+		toRegionDisplayName,
 	};
 }

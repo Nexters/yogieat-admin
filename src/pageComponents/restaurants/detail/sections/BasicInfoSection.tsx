@@ -14,10 +14,7 @@ import type {
 	DraftChangeHandler,
 	EditableRestaurant,
 } from "#/pageComponents/restaurants/detail/types";
-import {
-	toRegionLabel,
-	toTimeSlotLabel,
-} from "#/shared/constants/DomainLabels";
+import { toTimeSlotLabel } from "#/shared/constants/DomainLabels";
 
 type BasicInfoSectionProps = {
 	activeLargeCategory?: string;
@@ -36,6 +33,7 @@ type BasicInfoSectionProps = {
 	selectedCategoryInDraft?: CategoryOption;
 	selectedCategoryLabel?: string;
 	toCategoryLabel: (category: CategoryOption) => string;
+	toRegionDisplayName: (region?: string | null) => string;
 };
 
 export function BasicInfoSection({
@@ -55,6 +53,7 @@ export function BasicInfoSection({
 	selectedCategoryInDraft,
 	selectedCategoryLabel,
 	toCategoryLabel,
+	toRegionDisplayName,
 }: BasicInfoSectionProps) {
 	return (
 		<DetailSection
@@ -148,13 +147,13 @@ export function BasicInfoSection({
 						>
 							{regionOptions.map((region) => (
 								<option key={region} value={region}>
-									{toRegionLabel(region)}
+									{toRegionDisplayName(region)}
 								</option>
 							))}
 						</select>
 					) : (
 						<div className="admin-readonly">
-							{toRegionLabel(restaurant.region)}
+							{toRegionDisplayName(restaurant.region)}
 						</div>
 					)}
 				</DetailField>
@@ -195,6 +194,29 @@ export function BasicInfoSection({
 					) : (
 						<div className="admin-readonly">
 							{toTimeSlotLabel(restaurant.timeSlot)}
+						</div>
+					)}
+				</DetailField>
+				<DetailField label="노출 상태">
+					{isEditMode ? (
+						<label className="admin-display-toggle">
+							<input
+								type="checkbox"
+								checked={draft.isDisplay === "true"}
+								onChange={(event) =>
+									onDraftChange(
+										"isDisplay",
+										String(event.target.checked),
+									)
+								}
+							/>
+							<span>
+								{draft.isDisplay === "true" ? "노출" : "숨김"}
+							</span>
+						</label>
+					) : (
+						<div className="admin-readonly">
+							{restaurant.isDisplay ? "노출" : "숨김"}
 						</div>
 					)}
 				</DetailField>

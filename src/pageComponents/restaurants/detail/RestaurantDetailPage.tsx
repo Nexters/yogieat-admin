@@ -127,6 +127,7 @@ export function RestaurantDetailPage() {
 		setIsDetailImageError,
 		toastMessage,
 		toCategoryLabel,
+		toRegionDisplayName,
 	} = useRestaurantDetailPage({
 		hasValidId,
 		restaurantId,
@@ -286,6 +287,7 @@ export function RestaurantDetailPage() {
 							selectedCategoryInDraft={selectedCategoryInDraft}
 							selectedCategoryLabel={selectedCategoryLabel}
 							toCategoryLabel={toCategoryLabel}
+							toRegionDisplayName={toRegionDisplayName}
 						/>
 					<LocationSection
 						isEditMode={isEditMode}

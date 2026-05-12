@@ -23,6 +23,9 @@ export type EditableRestaurant = {
 	aiMateSummaryTitle: string;
 	aiMateSummaryContents: string;
 	timeSlot: string;
+	teamRecommendationTitle: string;
+	teamRecommendationReason: string;
+	isDisplay: string;
 	longitude: string;
 	latitude: string;
 };
@@ -77,6 +80,9 @@ export const toEditableRestaurant = (
 	aiMateSummaryTitle: restaurant.aiMateSummaryTitle,
 	aiMateSummaryContents: restaurant.aiMateSummaryContents.join("\n"),
 	timeSlot: restaurant.timeSlot,
+	teamRecommendationTitle: restaurant.teamRecommendationTitle ?? "",
+	teamRecommendationReason: restaurant.teamRecommendationReason ?? "",
+	isDisplay: String(restaurant.isDisplay),
 	longitude: String(restaurant.location?.coordinates[0] ?? ""),
 	latitude: String(restaurant.location?.coordinates[1] ?? ""),
 });
@@ -109,6 +115,9 @@ export const toRestaurantPatchRequest = (
 			.map((line) => line.trim())
 			.filter(Boolean),
 		timeSlot: draft.timeSlot as RestaurantDetail["timeSlot"],
+		teamRecommendationTitle: draft.teamRecommendationTitle.trim(),
+		teamRecommendationReason: draft.teamRecommendationReason.trim(),
+		isDisplay: draft.isDisplay === "true",
 		location:
 			longitude !== null && latitude !== null
 				? { coordinates: [longitude, latitude] }

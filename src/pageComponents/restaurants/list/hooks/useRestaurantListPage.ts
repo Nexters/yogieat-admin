@@ -20,17 +20,16 @@ import {
 import {
 	ALL_FILTER_VALUE,
 	LARGE_CATEGORY_CODES,
-	REGION_CODES,
 } from "#/shared/constants/DomainLabels";
 import { useAutoDismissToast } from "#/shared/hooks";
 import { getErrorMessage } from "#/shared/utils";
 
 const PAGE_SIZE = 8;
-const DEFAULT_REGION_OPTIONS = [ALL_FILTER_VALUE, ...REGION_CODES];
 const DEFAULT_LARGE_CATEGORY_OPTIONS = [
 	ALL_FILTER_VALUE,
 	...LARGE_CATEGORY_CODES,
 ];
+const EMPTY_REGIONS: RestaurantRegion[] = [];
 
 const DEFAULT_PAGE: PageResponse<RestaurantListItem> = {
 	content: [],
@@ -148,8 +147,8 @@ export function useRestaurantListPage() {
 	const {
 		data: categoryOptions = [],
 	} = useGetCategories(isCreatePanelOpen);
-	const { data: regionsResponse } = useGetRegions(isCreatePanelOpen);
-	const regions: RestaurantRegion[] = regionsResponse?.regions ?? [];
+	const { data: regionsResponse } = useGetRegions();
+	const regions: RestaurantRegion[] = regionsResponse?.regions ?? EMPTY_REGIONS;
 
 	const {
 		data: restaurantSearchResponse,
@@ -262,18 +261,33 @@ export function useRestaurantListPage() {
 	useAutoDismissToast(toastMessage, clearToastMessage);
 
 	const regionOptions = useMemo(() => {
-		const optionSet = new Set<string>(DEFAULT_REGION_OPTIONS);
+		const optionSet = new Set<string>([
+			ALL_FILTER_VALUE,
+			...regions.map((region) => region.name),
+		]);
 		if (query.region) {
 			optionSet.add(query.region);
 		}
-		pageResponse.content.forEach((restaurant) => {
-			if (restaurant.region) {
-				optionSet.add(restaurant.region);
-			}
-		});
 
 		return Array.from(optionSet);
-	}, [pageResponse.content, query.region]);
+	}, [query.region, regions]);
+
+	const regionDisplayNameByCode = useMemo(() => {
+		return new Map(
+			regions.map((region) => [region.name, region.displayName]),
+		);
+	}, [regions]);
+
+	const toRegionDisplayName = useCallback(
+		(region?: string | null) => {
+			if (!region) {
+				return "-";
+			}
+
+			return regionDisplayNameByCode.get(region) ?? region;
+		},
+		[regionDisplayNameByCode],
+	);
 
 	const largeCategoryOptions = useMemo(() => {
 		const optionSet = new Set<string>(DEFAULT_LARGE_CATEGORY_OPTIONS);
@@ -560,6 +574,7 @@ const handleDeleteRestaurant = useCallback(
 		deletingRestaurantId,
 		handleDeleteRestaurant,
 		setKeywordInput,
+		toRegionDisplayName,
 		toastMessage,
 		applySearch,
 		categoryOptions,
