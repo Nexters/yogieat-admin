@@ -33,6 +33,9 @@ const getCategoryLabel = (
 	return categoryId === null || categoryId === undefined ? "-" : String(categoryId);
 };
 
+const getDisplayStatusLabel = (isDisplay: boolean) =>
+	isDisplay ? "노출" : "숨김";
+
 type RestaurantListContentProps = {
 	errorMessage: string;
 	handleImageError: (restaurantId: number) => void;
@@ -62,7 +65,7 @@ export function RestaurantListContent({
 	return (
 		<>
 			<div className="admin-table-wrap">
-				<table className="admin-table">
+				<table className="admin-table admin-restaurant-table">
 					<thead>
 						<tr>
 							<th>ID</th>
@@ -71,6 +74,7 @@ export function RestaurantListContent({
 							<th>카테고리</th>
 							<th>평점</th>
 							<th>지역</th>
+							<th>노출 여부</th>
 							<th>수정일</th>
 							<th>상세</th>
 							<th>삭제</th>
@@ -79,14 +83,14 @@ export function RestaurantListContent({
 					<tbody>
 						{isLoading ? (
 							<tr>
-								<td colSpan={9} className="admin-table__status">
+								<td colSpan={10} className="admin-table__status">
 									목록을 불러오는 중입니다.
 								</td>
 							</tr>
 						) : null}
 						{!isLoading && errorMessage ? (
 							<tr>
-								<td colSpan={9} className="admin-table__status">
+								<td colSpan={10} className="admin-table__status">
 									{errorMessage}
 								</td>
 							</tr>
@@ -95,7 +99,7 @@ export function RestaurantListContent({
 						!errorMessage &&
 						restaurants.length === 0 ? (
 							<tr>
-								<td colSpan={9} className="admin-table__status">
+								<td colSpan={10} className="admin-table__status">
 									조건에 맞는 맛집이 없습니다.
 								</td>
 							</tr>
@@ -137,6 +141,19 @@ export function RestaurantListContent({
 											: "-"}
 									</td>
 									<td>{toRegionDisplayName(restaurant.region)}</td>
+									<td>
+										<span
+											className={`admin-display-status ${
+												restaurant.isDisplay
+													? "admin-display-status--visible"
+													: "admin-display-status--hidden"
+											}`}
+										>
+											{getDisplayStatusLabel(
+												restaurant.isDisplay,
+											)}
+										</span>
+									</td>
 									<td>
 										{formatDateTime(restaurant.updatedAt)}
 									</td>
@@ -265,6 +282,9 @@ export function RestaurantListContent({
 								</span>
 								<span>
 									지역: {toRegionDisplayName(restaurant.region)}
+								</span>
+								<span>
+									노출: {getDisplayStatusLabel(restaurant.isDisplay)}
 								</span>
 								<span>
 									수정일:{" "}

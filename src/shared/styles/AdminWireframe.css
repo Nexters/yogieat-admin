@@ -296,6 +296,10 @@
 	border-collapse: collapse;
 }
 
+.admin-restaurant-table {
+	min-width: 940px;
+}
+
 .admin-table thead {
 	background: var(--color-surface-lightgray);
 }
@@ -324,6 +328,29 @@
 
 .admin-table__status {
 	text-align: center;
+	color: var(--color-text-secondary);
+}
+
+.admin-display-status {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 48px;
+	height: 28px;
+	padding: 0 var(--space-2);
+	border-radius: var(--radius-sm);
+	font-size: var(--font-size-caption-m);
+	font-weight: var(--font-weight-semibold);
+	white-space: nowrap;
+}
+
+.admin-display-status--visible {
+	background: rgba(31, 157, 85, 0.12);
+	color: #167744;
+}
+
+.admin-display-status--hidden {
+	background: var(--color-surface-lightgray);
 	color: var(--color-text-secondary);
 }
 
