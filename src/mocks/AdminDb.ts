@@ -1295,7 +1295,14 @@ export const adminMockDb = {
 			.filter((restaurant) =>
 				includeByCategory(restaurant, query.categoryId),
 			)
-			.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+			.sort((a, b) => {
+				const updatedAtComparison = b.updatedAt.localeCompare(a.updatedAt);
+				if (updatedAtComparison !== 0) {
+					return updatedAtComparison;
+				}
+
+				return b.id - a.id;
+			})
 			.map(toListItem);
 
 		return paginate(filtered, query.page, query.size);

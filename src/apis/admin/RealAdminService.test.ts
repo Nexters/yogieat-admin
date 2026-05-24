@@ -1,6 +1,7 @@
 import { rest } from "msw";
 
 import { realAdminService } from "#/apis/admin/RealAdminService";
+import type { RestaurantListItem } from "#/apis/restaurants";
 import { server } from "#/mocks/server";
 import { ADMIN_ERROR_CODE } from "#/shared/constants";
 
@@ -16,6 +17,20 @@ const createErrorResponse = (errorCode: string, message: string) => ({
 		message,
 	},
 	timestamp: new Date().toISOString(),
+});
+
+const createRestaurantListItem = (
+	id: number,
+	updatedAt: string,
+): RestaurantListItem => ({
+	id,
+	name: `맛집 ${id}`,
+	categoryId: null,
+	rating: null,
+	imageUrl: null,
+	region: "GANGNAM",
+	isDisplay: true,
+	updatedAt,
 });
 
 const seedStoredSession = () => {
@@ -75,6 +90,61 @@ describe("real admin service auth handling", () => {
 		} finally {
 			window.removeEventListener(SESSION_UPDATED_EVENT, onSessionUpdated);
 		}
+	});
+
+	test("requests and normalizes restaurant list order by updatedAt and id descending", async () => {
+		seedStoredSession();
+		let requestedSorts: string[] = [];
+
+		server.use(
+			rest.get(
+				"*/api/v1/admin/restaurants",
+				(request, response, ctx) => {
+					requestedSorts = request.url.searchParams.getAll("sort");
+
+					return response(
+						ctx.json({
+							status: 200,
+							data: {
+								content: [
+									createRestaurantListItem(
+										1,
+										"2026-05-20T00:00:00.000Z",
+									),
+									createRestaurantListItem(
+										3,
+										"2026-05-21T00:00:00.000Z",
+									),
+									createRestaurantListItem(
+										2,
+										"2026-05-20T00:00:00.000Z",
+									),
+								],
+								page: 0,
+								size: 10,
+								totalElements: 3,
+								totalPages: 1,
+								hasNext: false,
+							},
+							timestamp: new Date().toISOString(),
+						}),
+					);
+				},
+			),
+		);
+
+		const response = await realAdminService.getRestaurants({
+			page: 0,
+			size: 10,
+			region: "GANGNAM",
+		});
+
+		expect(requestedSorts).toEqual(["updatedAt,desc", "id,desc"]);
+		expect(response.content.map((restaurant) => restaurant.id)).toEqual([
+			3,
+			2,
+			1,
+		]);
 	});
 });
 

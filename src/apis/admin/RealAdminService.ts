@@ -419,6 +419,8 @@ const buildRestaurantListQuery = (query: RestaurantListQuery): string => {
 	const search = new URLSearchParams();
 	search.set("page", String(query.page));
 	search.set("size", String(query.size));
+	search.append("sort", "updatedAt,desc");
+	search.append("sort", "id,desc");
 
 	if (query.keyword?.trim()) {
 		search.set("keyword", query.keyword.trim());
@@ -435,6 +437,25 @@ const buildRestaurantListQuery = (query: RestaurantListQuery): string => {
 
 	return search.toString();
 };
+
+const compareRestaurantListItems = (
+	left: RestaurantListItem,
+	right: RestaurantListItem,
+) => {
+	const updatedAtComparison = right.updatedAt.localeCompare(left.updatedAt);
+	if (updatedAtComparison !== 0) {
+		return updatedAtComparison;
+	}
+
+	return right.id - left.id;
+};
+
+const normalizeRestaurantListResponse = (
+	response: PageResponse<RestaurantListItem>,
+): PageResponse<RestaurantListItem> => ({
+	...response,
+	content: [...response.content].sort(compareRestaurantListItems),
+});
 
 const buildGatheringListQuery = (query: GatheringListQuery): string => {
 	const search = new URLSearchParams();
@@ -880,7 +901,7 @@ export const realAdminService: AdminService = {
 			headers: {},
 		});
 
-		return response;
+		return normalizeRestaurantListResponse(response);
 	},
 
 	async getRestaurantById(id: number): Promise<RestaurantDetail | null> {
