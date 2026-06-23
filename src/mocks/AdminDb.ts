@@ -17,6 +17,7 @@ import {
 	RegionListResponse,
 	RegionListQuery,
 	RegionPatchRequest,
+	RegionStatus,
 	RestaurantCreateRequest,
 	RestaurantCreateResponse,
 	RestaurantDetail,
@@ -497,7 +498,18 @@ const REGION_COORDINATES_BY_CODE: Record<string, [number, number]> = {
 	SAMGAKJI: [126.9722, 37.5347],
 };
 
-const INACTIVE_REGION_CODE_SET = new Set(["SADANG", "SAMGAKJI"]);
+const PENDING_REGION_CODE_SET = new Set(["SADANG"]);
+const INACTIVE_REGION_CODE_SET = new Set(["SAMGAKJI"]);
+
+const getRegionSeedStatus = (regionCode: string): RegionStatus => {
+	if (PENDING_REGION_CODE_SET.has(regionCode)) {
+		return "PENDING";
+	}
+	if (INACTIVE_REGION_CODE_SET.has(regionCode)) {
+		return "INACTIVE";
+	}
+	return "ACTIVE";
+};
 
 const REGION_SEED: RegionDetail[] = REGION_CODES.map((regionCode, index) => ({
 	id: index + 1,
@@ -508,7 +520,7 @@ const REGION_SEED: RegionDetail[] = REGION_CODES.map((regionCode, index) => ({
 		coordinates: REGION_COORDINATES_BY_CODE[regionCode] ?? [0, 0],
 		type: "Point",
 	},
-	active: !INACTIVE_REGION_CODE_SET.has(regionCode),
+	status: getRegionSeedStatus(regionCode),
 	sortOrder: index,
 	restaurantCount: RESTAURANT_SEED.filter(
 		(restaurant) => restaurant.region === regionCode,
@@ -1295,7 +1307,14 @@ export const adminMockDb = {
 			.filter((restaurant) =>
 				includeByCategory(restaurant, query.categoryId),
 			)
-			.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+			.sort((a, b) => {
+				const updatedAtComparison = b.updatedAt.localeCompare(a.updatedAt);
+				if (updatedAtComparison !== 0) {
+					return updatedAtComparison;
+				}
+
+				return b.id - a.id;
+			})
 			.map(toListItem);
 
 		return paginate(filtered, query.page, query.size);
@@ -1459,7 +1478,7 @@ export const adminMockDb = {
 				],
 				type: "Point",
 			},
-			active: request.active ?? true,
+			status: request.status ?? "ACTIVE",
 			sortOrder,
 			restaurantCount: 0,
 		};
@@ -1514,10 +1533,7 @@ export const adminMockDb = {
 						type: "Point",
 					}
 				: currentRegion.coordinatesStandard,
-			active:
-				typeof patch.active === "boolean"
-					? patch.active
-					: currentRegion.active,
+			status: patch.status ?? currentRegion.status,
 			sortOrder: nextSortOrder,
 		};
 

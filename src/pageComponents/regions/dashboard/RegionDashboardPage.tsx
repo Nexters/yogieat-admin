@@ -2,16 +2,29 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getAdminServiceMode } from "#/apis/admin";
-import type { RegionDetail } from "#/apis/regions";
+import type { RegionDetail, RegionStatus } from "#/apis/regions";
 import { useRegionDashboardPage } from "#/pageComponents/regions/dashboard/hooks";
 import { useAuth } from "#/providers";
 import { AdminTopbar, Button, Tag, Toast } from "#/shared/ui";
 
-const REGION_STATUS_OPTIONS = [
+const REGION_STATUS_OPTIONS: readonly {
+	label: string;
+	value: "ALL" | RegionStatus;
+}[] = [
 	{ label: "전체", value: "ALL" },
-	{ label: "운영중", value: "ACTIVE" },
-	{ label: "비활성", value: "INACTIVE" },
-] as const;
+	{ label: "활성화", value: "ACTIVE" },
+	{ label: "활성화 예정", value: "PENDING" },
+	{ label: "비활성화", value: "INACTIVE" },
+];
+
+const REGION_EDIT_STATUS_OPTIONS: readonly {
+	label: string;
+	value: RegionStatus;
+}[] = [
+	{ label: "활성화", value: "ACTIVE" },
+	{ label: "활성화 예정", value: "PENDING" },
+	{ label: "비활성화", value: "INACTIVE" },
+];
 
 const REGION_PROVINCE_OPTIONS = [
 	"서울",
@@ -35,8 +48,17 @@ const REGION_PROVINCE_OPTIONS = [
 
 const formatCoordinate = (value: number) => value.toFixed(4);
 
+const REGION_STATUS_LABELS: Record<RegionStatus, string> = {
+	ACTIVE: "활성화",
+	PENDING: "활성화 예정",
+	INACTIVE: "비활성화",
+};
+
 const getRegionStatusLabel = (region: RegionDetail) =>
-	region.active ? "운영중" : "비활성";
+	REGION_STATUS_LABELS[region.status];
+
+const getRegionStatusClassName = (status: RegionStatus) =>
+	`admin-region-status--${status.toLowerCase()}`;
 
 function OverviewCard({
 	description,
@@ -93,9 +115,7 @@ function RegionListCard({
 				<span
 					className={[
 						"admin-region-status",
-						region.active
-							? "admin-region-status--active"
-							: "admin-region-status--inactive",
+						getRegionStatusClassName(region.status),
 					]
 						.filter(Boolean)
 						.join(" ")}
@@ -182,6 +202,7 @@ export function RegionDashboardPage() {
 		handleSubmit,
 		hasUnsavedChanges,
 		inactiveRegionCount,
+		pendingRegionCount,
 		isCreateMode,
 		isDeleteDialogOpen,
 		isDeleting,
@@ -263,9 +284,9 @@ export function RegionDashboardPage() {
 					description="정렬 순서 기준으로 운영 중인 지역과 준비 중인 지역을 함께 확인합니다."
 				/>
 				<OverviewCard
-					title="운영 상태 (활성 / 비활성)"
-					value={`${activeRegionCount} / ${inactiveRegionCount}`}
-					description="삭제 대신 비활성화가 필요한 지역을 빠르게 구분할 수 있습니다."
+					title="운영 상태"
+					value={`${activeRegionCount} / ${pendingRegionCount} / ${inactiveRegionCount}`}
+					description="활성화, 활성화 예정, 비활성화 지역을 빠르게 구분합니다."
 				/>
 				<OverviewCard
 					title="연결 맛집"
@@ -604,22 +625,37 @@ export function RegionDashboardPage() {
 										</label>
 
 										<label className="admin-region-toggle">
-											<input
-												type="checkbox"
-												checked={draft.active}
-												onChange={(event) =>
-													handleDraftChange(
-														"active",
-														event.target.checked,
-													)
-												}
-											/>
 											<div>
 												<span>운영 상태</span>
+												<select
+													value={draft.status}
+													onChange={(event) =>
+														handleDraftChange(
+															"status",
+															event.target
+																.value as RegionStatus,
+														)
+													}
+												>
+													{REGION_EDIT_STATUS_OPTIONS.map(
+														(option) => (
+															<option
+																key={
+																	option.value
+																}
+																value={
+																	option.value
+																}
+															>
+																{option.label}
+															</option>
+														),
+													)}
+												</select>
 												<p>
-													비활성화하면 지역은 유지하되
-													운영 노출만 조정할 수
-													있습니다.
+													활성화 예정은 운영 준비
+													상태로 구분하고, 비활성화는
+													노출을 중지할 때 사용합니다.
 												</p>
 											</div>
 										</label>
@@ -637,16 +673,18 @@ export function RegionDashboardPage() {
 											<span
 												className={[
 													"admin-region-status",
-													draft.active
-														? "admin-region-status--active"
-														: "admin-region-status--inactive",
+													getRegionStatusClassName(
+														draft.status,
+													),
 												]
 													.filter(Boolean)
 													.join(" ")}
 											>
-												{draft.active
-													? "운영중"
-													: "비활성"}
+												{
+													REGION_STATUS_LABELS[
+														draft.status
+													]
+												}
 											</span>
 										</div>
 										<dl className="admin-region-preview__meta">
@@ -732,7 +770,7 @@ export function RegionDashboardPage() {
 										</p>
 										<p>
 											{selectedRegion.restaurantCount > 0
-												? `${selectedRegion.restaurantCount}개 맛집이 연결되어 있어 삭제 대신 비활성화를 우선 검토하는 편이 안전합니다.`
+												? `${selectedRegion.restaurantCount}개 맛집이 연결되어 있어 삭제 대신 비활성화 상태 전환을 우선 검토하는 편이 안전합니다.`
 												: "연결된 맛집이 없어 필요 시 바로 삭제할 수 있습니다."}
 										</p>
 										{deleteDisabledReason ? (

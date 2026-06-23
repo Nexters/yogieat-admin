@@ -17,6 +17,7 @@ import type {
 	RegionListQuery,
 	RegionListResponse,
 	RegionPatchRequest,
+	RegionStatus,
 } from "#/apis/regions";
 import type {
 	PageResponse,
@@ -56,6 +57,7 @@ export type {
 	RegionListQuery,
 	RegionListResponse,
 	RegionPatchRequest,
+	RegionStatus,
 	RestaurantDetail,
 	RestaurantListItem,
 	RestaurantListQuery,

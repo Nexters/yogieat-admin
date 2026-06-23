@@ -15,6 +15,7 @@ import {
 	RegionListResponse,
 	RegionListQuery,
 	RegionPatchRequest,
+	RegionStatus,
 	RestaurantCreateRequest,
 	RestaurantCreateResponse,
 	RestaurantDetail,
@@ -52,6 +53,7 @@ type RawRegionResponse = {
 	restaurant_count?: unknown;
 	sortOrder?: unknown;
 	sort_order?: unknown;
+	status?: unknown;
 };
 
 type RawTokenResponse = {
@@ -184,6 +186,19 @@ const toBoolean = (value: unknown): boolean | undefined => {
 	}
 
 	return undefined;
+};
+
+const toRegionStatus = (value: unknown): RegionStatus | undefined => {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+
+	const normalized = value.trim().toUpperCase();
+	return normalized === "ACTIVE" ||
+		normalized === "PENDING" ||
+		normalized === "INACTIVE"
+		? normalized
+		: undefined;
 };
 
 const resolveExpiresAt = (payload: RawTokenResponse): string | undefined => {
@@ -419,6 +434,8 @@ const buildRestaurantListQuery = (query: RestaurantListQuery): string => {
 	const search = new URLSearchParams();
 	search.set("page", String(query.page));
 	search.set("size", String(query.size));
+	search.append("sort", "updatedAt,desc");
+	search.append("sort", "id,desc");
 
 	if (query.keyword?.trim()) {
 		search.set("keyword", query.keyword.trim());
@@ -435,6 +452,25 @@ const buildRestaurantListQuery = (query: RestaurantListQuery): string => {
 
 	return search.toString();
 };
+
+const compareRestaurantListItems = (
+	left: RestaurantListItem,
+	right: RestaurantListItem,
+) => {
+	const updatedAtComparison = right.updatedAt.localeCompare(left.updatedAt);
+	if (updatedAtComparison !== 0) {
+		return updatedAtComparison;
+	}
+
+	return right.id - left.id;
+};
+
+const normalizeRestaurantListResponse = (
+	response: PageResponse<RestaurantListItem>,
+): PageResponse<RestaurantListItem> => ({
+	...response,
+	content: [...response.content].sort(compareRestaurantListItems),
+});
 
 const buildGatheringListQuery = (query: GatheringListQuery): string => {
 	const search = new URLSearchParams();
@@ -587,13 +623,17 @@ const normalizeRegionItem = (value: unknown): RegionDetail | null => {
 		return null;
 	}
 
+	const legacyActive = toBoolean(raw.active) ?? toBoolean(raw.is_active);
+
 	return {
 		id,
 		code,
 		displayName,
 		province,
 		coordinatesStandard: toRegionCoordinatesFromRaw(raw),
-		active: toBoolean(raw.active) ?? toBoolean(raw.is_active) ?? false,
+		status:
+			toRegionStatus(raw.status) ??
+			(legacyActive ? "ACTIVE" : "INACTIVE"),
 		sortOrder: Math.max(
 			0,
 			Math.trunc(
@@ -880,7 +920,7 @@ export const realAdminService: AdminService = {
 			headers: {},
 		});
 
-		return response;
+		return normalizeRestaurantListResponse(response);
 	},
 
 	async getRestaurantById(id: number): Promise<RestaurantDetail | null> {
