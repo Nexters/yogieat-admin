@@ -5,6 +5,7 @@ import type {
 	RegionCreateRequest,
 	RegionDetail,
 	RegionPatchRequest,
+	RegionStatus,
 } from "#/apis/regions";
 import {
 	useCreateRegion,
@@ -16,7 +17,7 @@ import {
 import { useAutoDismissToast } from "#/shared/hooks";
 import { getErrorMessage } from "#/shared/utils";
 
-export type RegionStatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
+export type RegionStatusFilter = "ALL" | RegionStatus;
 
 export type RegionDraft = {
 	code: string;
@@ -24,7 +25,7 @@ export type RegionDraft = {
 	province: string;
 	longitude: string;
 	latitude: string;
-	active: boolean;
+	status: RegionStatus;
 	sortOrder: string;
 };
 
@@ -69,7 +70,9 @@ const toRegionDashboardQuery = (
 ): RegionDashboardQuery => {
 	const statusParam = searchParams.get("status");
 	const normalizedStatus =
-		statusParam === "ACTIVE" || statusParam === "INACTIVE"
+		statusParam === "ACTIVE" ||
+		statusParam === "PENDING" ||
+		statusParam === "INACTIVE"
 			? statusParam
 			: DEFAULT_STATUS_FILTER;
 
@@ -127,7 +130,7 @@ const toRegionDraft = (region: RegionDetail): RegionDraft => ({
 	province: region.province,
 	longitude: toCoordinateInput(region.coordinatesStandard.coordinates[0]),
 	latitude: toCoordinateInput(region.coordinatesStandard.coordinates[1]),
-	active: region.active,
+	status: region.status,
 	sortOrder: String(region.sortOrder),
 });
 
@@ -140,7 +143,7 @@ const createEmptyDraft = (
 	province,
 	longitude: "",
 	latitude: "",
-	active: true,
+	status: "ACTIVE",
 	sortOrder: String(nextSortOrder),
 });
 
@@ -243,7 +246,7 @@ const buildCreateRequest = (draft: RegionDraft): RegionCreateRequest => ({
 			Number(draft.latitude.trim()),
 		],
 	},
-	active: draft.active,
+	status: draft.status,
 	sortOrder: Number(draft.sortOrder.trim()),
 });
 
@@ -276,8 +279,8 @@ const buildPatchRequest = (
 			coordinates: [nextLongitude, nextLatitude],
 		};
 	}
-	if (draft.active !== currentRegion.active) {
-		patch.active = draft.active;
+	if (draft.status !== currentRegion.status) {
+		patch.status = draft.status;
 	}
 	if (nextSortOrder !== currentRegion.sortOrder) {
 		patch.sortOrder = nextSortOrder;
@@ -373,11 +376,7 @@ export function useRegionDashboardPage() {
 
 		return regions.filter((region) => {
 			const matchesStatus =
-				query.status === "ALL"
-					? true
-					: query.status === "ACTIVE"
-						? region.active
-						: !region.active;
+				query.status === "ALL" ? true : region.status === query.status;
 			const matchesKeyword = normalizedKeyword
 				? [region.code, region.displayName]
 						.concat(region.province ? [region.province] : [])
@@ -392,9 +391,14 @@ export function useRegionDashboardPage() {
 
 	const totalRegionCount = regions.length;
 	const activeRegionCount = useMemo(() => {
-		return regions.filter((region) => region.active).length;
+		return regions.filter((region) => region.status === "ACTIVE").length;
 	}, [regions]);
-	const inactiveRegionCount = totalRegionCount - activeRegionCount;
+	const pendingRegionCount = useMemo(() => {
+		return regions.filter((region) => region.status === "PENDING").length;
+	}, [regions]);
+	const inactiveRegionCount = useMemo(() => {
+		return regions.filter((region) => region.status === "INACTIVE").length;
+	}, [regions]);
 	const totalRestaurantCount = useMemo(() => {
 		return regions.reduce(
 			(accumulator, region) => accumulator + region.restaurantCount,
@@ -811,6 +815,7 @@ export function useRegionDashboardPage() {
 		handleSubmit,
 		hasUnsavedChanges,
 		inactiveRegionCount,
+		pendingRegionCount,
 		isCreateMode,
 		isDeleteDialogOpen,
 		isDeleting: deleteRegionMutation.isPending,

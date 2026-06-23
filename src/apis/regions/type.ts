@@ -1,3 +1,5 @@
+export type RegionStatus = "ACTIVE" | "PENDING" | "INACTIVE";
+
 export type RegionCoordinates = {
 	coordinates: [number, number];
 	type?: "Point" | string;
@@ -9,7 +11,7 @@ export type RegionSummary = {
 	displayName: string;
 	province: string;
 	coordinatesStandard: RegionCoordinates;
-	active: boolean;
+	status: RegionStatus;
 	sortOrder: number;
 	restaurantCount: number;
 };
@@ -33,7 +35,7 @@ export type RegionCreateRequest = {
 	displayName: string;
 	province?: string;
 	coordinatesStandard: RegionCoordinatesRequest;
-	active?: boolean;
+	status?: RegionStatus;
 	sortOrder?: number;
 };
 

@@ -15,6 +15,7 @@ import {
 	RegionListResponse,
 	RegionListQuery,
 	RegionPatchRequest,
+	RegionStatus,
 	RestaurantCreateRequest,
 	RestaurantCreateResponse,
 	RestaurantDetail,
@@ -52,6 +53,7 @@ type RawRegionResponse = {
 	restaurant_count?: unknown;
 	sortOrder?: unknown;
 	sort_order?: unknown;
+	status?: unknown;
 };
 
 type RawTokenResponse = {
@@ -184,6 +186,19 @@ const toBoolean = (value: unknown): boolean | undefined => {
 	}
 
 	return undefined;
+};
+
+const toRegionStatus = (value: unknown): RegionStatus | undefined => {
+	if (typeof value !== "string") {
+		return undefined;
+	}
+
+	const normalized = value.trim().toUpperCase();
+	return normalized === "ACTIVE" ||
+		normalized === "PENDING" ||
+		normalized === "INACTIVE"
+		? normalized
+		: undefined;
 };
 
 const resolveExpiresAt = (payload: RawTokenResponse): string | undefined => {
@@ -608,13 +623,17 @@ const normalizeRegionItem = (value: unknown): RegionDetail | null => {
 		return null;
 	}
 
+	const legacyActive = toBoolean(raw.active) ?? toBoolean(raw.is_active);
+
 	return {
 		id,
 		code,
 		displayName,
 		province,
 		coordinatesStandard: toRegionCoordinatesFromRaw(raw),
-		active: toBoolean(raw.active) ?? toBoolean(raw.is_active) ?? false,
+		status:
+			toRegionStatus(raw.status) ??
+			(legacyActive ? "ACTIVE" : "INACTIVE"),
 		sortOrder: Math.max(
 			0,
 			Math.trunc(
